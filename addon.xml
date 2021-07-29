@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="metadata.ael.tgdb" name="TGDB scraper for AEL" version="0.0.1" provider-name="chrisism">
+<addon id="script.ael.tgdbscraper" name="TGDB scraper for AEL" version="0.0.1" provider-name="chrisism">
   <requires>
       <import addon="xbmc.python" version="3.0.0"/>
       <import addon="script.module.AEL" version="0.10.0"/>
@@ -17,8 +17,8 @@
     <license>GNU General Public License version 2</license>
     <email>crizizz@gmail.com</email>
     <forum>http://forum.kodi.tv/showthread.php?tid=287826</forum>
-    <website>https://github.com/chrisism/metadata.ael.tgdb</website>
-    <source>https://github.com/chrisism/metadata.ael.tgdb</source>
+    <website>https://github.com/chrisism/script.ael.tgdbscraper</website>
+    <source>https://github.com/chrisism/script.ael.tgdbscraper</source>
     <assets>
       <icon>media/icon.png</icon>
       <fanart>media/fanart.jpg</fanart>

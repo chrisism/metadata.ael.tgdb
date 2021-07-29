@@ -1,5 +1,5 @@
 {
-    "name": "metadata.ael.tgdb",
+    "name": "script.ael.tgdbscraper",
     "version": "0.0.1",
     "scripts": {
         "build": "addon build",
@@ -12,7 +12,8 @@
         "build-pack-patch": "npm run build-patch && addon package",
         "build-pack-minor": "npm run build-minor && addon package",
         "build-pack-major": "npm run build-major && addon package",
-        "build-pack-copy": "npm run build && addon package && cp -r ./.dist/*.zip /mnt/chromeos/MyFiles/Downloads/shared/",
+        "build-pack-copy-chrome": "npm run build && addon package && cp -r ./.dist/*.zip /mnt/chromeos/MyFiles/Downloads/shared/",
+        "build-pack-copy-win": "npm run build && addon package && copy /Y .\\.dist\\*.zip .\\..\\",
         "build-publish": "npm run build && addon repository",
         "build-publish-alpha": "npm run build-alpha && addon repository",
         "build-publish-patch": "npm run build-patch && addon repository",
@@ -23,7 +24,7 @@
         "build-install-patch": "npm run build-patch && addon install",
         "build-install-minor": "npm run build-minor && addon install",
         "build-install-major": "npm run build-major && addon install",
-        "build-install-copy": "npm run build && addon install && rm -rf /mnt/chromeos/MyFiles/Downloads/shared/metadata.ael.tgdb || true && cp -r /home/cwjungerius/projects/addons/metadata.ael.tgdb /mnt/chromeos/MyFiles/Downloads/shared/"
+        "build-install-copy": "npm run build && addon install && rm -rf /mnt/chromeos/MyFiles/Downloads/shared/script.ael.tgdbscraper || true && cp -r /home/cwjungerius/projects/addons/script.ael.tgdbscraper /mnt/chromeos/MyFiles/Downloads/shared/"
     },
     "devDependencies": {
         "kodi-addon-builder": "^1.2.3"
@@ -31,7 +32,7 @@
     "dependencies": {},
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/chrisism/metadata.ael.tgdb.git"
+        "url": "git+https://github.com/chrisism/script.ael.tgdbscraper.git"
     },
     "keywords": [
         "kodi",
@@ -41,5 +42,5 @@
     ],
     "author": "chrisism",
     "license": "GPL-2.0",
-    "homepage": "https://github.com/chrisism/metadata.ael.tgdb#readme"
+    "homepage": "https://github.com/chrisism/script.ael.tgdbscraper#readme"
 }
