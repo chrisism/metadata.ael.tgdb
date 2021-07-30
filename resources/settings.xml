@@ -13,6 +13,10 @@
                         <heading>30101</heading>
                     </control>
                 </setting>
+                <setting id="scraper_cache_dir" type="string" label="Cache directory" help="">
+                    <level>1</level>
+                    <default></default>
+                </setting>
                 <setting id="log_level" type="integer" label="30129" help="">
                     <level>1</level>
                     <default>1</default>
@@ -36,9 +40,17 @@
                     <level>4</level>
                     <default>SCRAPER</default>
                 </setting>
-                <setting id="ael.scraper.supported_types" type="string" label="Types supported by this scraper" help="">
+                <setting id="ael.scraper.supported_metadata" type="string" label="Metadata supported by this scraper" help="">
                     <level>4</level>
-                    <default>metadata|fanart|banner</default>
+                    <default>title|year|genre|developer|nplayers|esrb|plot</default>
+                </setting>
+                <setting id="ael.scraper.supported_assets" type="string" label="Assets supported by this scraper" help="">
+                    <level>4</level>
+                    <default>fanart|banner|snap|clearlogo|boxfront|boxback</default>
+                </setting>
+                <setting id="ael.scraper.friendlyname" type="string" label="Scraper friendlyname" help="">
+                    <level>4</level>
+                    <default>TheGamesDB scraper</default>
                 </setting>
             </group>
         </category>
