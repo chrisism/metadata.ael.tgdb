@@ -48,13 +48,12 @@ def run_plugin():
     parser = argparse.ArgumentParser(prog='script.ael.defaults')
     parser.add_argument('--cmd', help="Command to execute", choices=['launch', 'scan', 'scrape', 'configure'])
     parser.add_argument('--type',help="Plugin type", choices=['LAUNCHER', 'SCANNER', 'SCRAPER'], default=constants.AddonType.LAUNCHER.name)
-    parser.add_argument('--romcollection_id', type=str, help="ROM Collection ID")
+    parser.add_argument('--server_host', type=str, help="Host")
+    parser.add_argument('--server_port', type=int, help="Port")
     parser.add_argument('--rom_id', type=str, help="ROM ID")
-    parser.add_argument('--launcher_id', type=str, help="Launcher configuration ID")
-    parser.add_argument('--rom', type=str, help="ROM data dictionary")
-    parser.add_argument('--rom_args', type=str)
-    parser.add_argument('--settings', type=str)
-    parser.add_argument('--is_non_blocking', type=bool, default=False)
+    parser.add_argument('--romcollection_id', type=str, help="ROM Collection ID")
+    parser.add_argument('--ael_addon_id', type=str, help="Addon configuration ID")
+    parser.add_argument('--settings', type=json.loads, help="Specific run setting")
     
     try:
         args = parser.parse_args()
@@ -82,24 +81,36 @@ def run_plugin():
 # Scraper methods.
 # ---------------------------------------------------------------------------------------------
 def run_rom_scraper(args):
+    logger.debug('========== run_scraper() BEGIN ==================================================')
+    pdialog             = kodi.ProgressDialog()
+    
+    settings            = ScraperSettings.from_settings_dict(args.settings)
+    scraper_strategy    = ScrapeStrategy(
+                            args.server_host, 
+                            args.server_port, 
+                            settings, 
+                            TheGamesDB(), 
+                            pdialog)
+                        
+    if args.rom_id is not None:
+        scraped_rom = scraper_strategy.process_single_rom(args.rom_id)
+        pdialog.endProgress()
+        pdialog.startProgress('Saving ROM in database ...')
+        scraper_strategy.store_scraped_rom(args.ael_addon_id, scraped_rom)
+        pdialog.endProgress()
+        
+    if args.romcollection_id is not None:
+        scraped_roms = scraper_strategy.process_collection(args.romcollection_id)
+        pdialog.endProgress()
+        pdialog.startProgress('Saving ROMs in database ...')
+        scraper_strategy.store_scraped_roms(args.ael_addon_id, scraped_roms)
+        pdialog.endProgress()
+            
     logger.debug('TGDB scraper: Starting ...')
     settings    = json.loads(args.settings)
     rom_dic     = json.loads(args.rom)
     rom_id      = args.rom_id
 
-    logger.debug('========== run_scraper() BEGIN ==================================================')
-    progress_dialog     = kodi.ProgressDialog()
-    scraper_settings    = ScraperSettings.from_settings_dict(settings)
-    scraper_strategy    = ScrapeStrategy(scraper_settings, TheGamesDB())
-    
-    scraped_rom_data = scraper_strategy.process_ROM()
-    logger.info('run_rom_scraper(): rom scraping done')
-    progress_dialog.endProgress()
-    
-    scraper_strategy.store_scraped_rom(args.romd_id, scraped_rom_data)
-    progress_dialog.close()
-    kodi.notify('ROMs scraping done')
-                                 
 def run_collection_scraper(args):
     pass
         
