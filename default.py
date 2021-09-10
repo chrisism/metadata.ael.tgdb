@@ -105,11 +105,6 @@ def run_rom_scraper(args):
         pdialog.startProgress('Saving ROMs in database ...')
         scraper_strategy.store_scraped_roms(args.ael_addon_id, scraped_roms)
         pdialog.endProgress()
-            
-    logger.debug('TGDB scraper: Starting ...')
-    settings    = json.loads(args.settings)
-    rom_dic     = json.loads(args.rom)
-    rom_id      = args.rom_id
 
 def run_collection_scraper(args):
     pass

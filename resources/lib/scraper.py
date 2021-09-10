@@ -22,13 +22,14 @@ from __future__ import unicode_literals
 from __future__ import division
 
 import logging
-import urllib
 import json
 import re
 
+from urllib.parse import quote_plus
+
 # --- AEL packages ---
 from ael import constants, platforms, settings
-from ael.utils import io, text, net, kodi
+from ael.utils import io, net, kodi
 from ael.scrapers import Scraper
 
 logger = logging.getLogger(__name__)
@@ -64,7 +65,7 @@ class TheGamesDB(Scraper):
         'screenshot': constants.ASSET_SNAP_ID,
         'boxart' : constants.ASSET_BOXFRONT_ID,
         'boxartfront': constants.ASSET_BOXFRONT_ID,
-        'boxartback': constants.SET_BOXBACK_ID,
+        'boxartback': constants.ASSET_BOXBACK_ID,
         'fanart' : constants.ASSET_FANART_ID,
         'clearlogo': constants.ASSET_CLEARLOGO_ID,
         'banner': constants.ASSET_BANNER_ID,
@@ -77,6 +78,9 @@ class TheGamesDB(Scraper):
     URL_Developers = 'https://api.thegamesdb.net/v1/Developers'
     URL_Publishers = 'https://api.thegamesdb.net/v1/Publishers'
     URL_Images     = 'https://api.thegamesdb.net/v1/Games/Images'
+
+    GLOBAL_CACHE_TGDB_GENRES     = 'TGDB_genres'
+    GLOBAL_CACHE_TGDB_DEVELOPERS = 'TGDB_developers'
 
     # --- Constructor ----------------------------------------------------------------------------
     def __init__(self):
@@ -101,9 +105,6 @@ class TheGamesDB(Scraper):
         cache_dir = settings.getSetting('scraper_cache_dir')
         # --- Pass down common scraper settings ---
         super(TheGamesDB, self).__init__(cache_dir)
-
-    def get_id(self):
-        return constants.SCRAPER_THEGAMESDB_ID
     
     # --- Base class abstract methods ------------------------------------------------------------
     def get_name(self): return 'TheGamesDB'
@@ -223,21 +224,21 @@ class TheGamesDB(Scraper):
  
     # This function may be called many times in the ROM Scanner. All calls to this function
     # must be cached. See comments for this function in the Scraper abstract class.
-    def get_assets(self, asset_info, status_dic):
+    def get_assets(self, asset_info_id:str, status_dic):
         # --- If scraper is disabled return immediately and silently ---
         if self.scraper_disabled:
             logger.debug('TheGamesDB.get_assets() Scraper disabled. Returning empty data.')
             return []
 
-        logger.debug('TheGamesDB.get_assets() Getting assets {} (ID {}) for candidate ID "{}"'.format(
-            asset_info.name, asset_info.id, self.candidate['id']))
+        logger.debug('TheGamesDB.get_assets() Getting assets {} for candidate ID "{}"'.format(
+            asset_info_id, self.candidate['id']))
 
         # --- Request is not cached. Get candidates and introduce in the cache ---
         # Get all assets for candidate. _scraper_get_assets_all() caches all assets for a
         # candidate. Then select asset of a particular type.
         all_asset_list = self._retrieve_all_assets(self.candidate, status_dic)
         if not status_dic['status']: return None
-        asset_list = [asset_dic for asset_dic in all_asset_list if asset_dic['asset_ID'] == asset_info.id]
+        asset_list = [asset_dic for asset_dic in all_asset_list if asset_dic['asset_ID'] == asset_info_id]
         logger.debug('TheGamesDB::get_assets() Total assets {} / Returned assets {}'.format(
             len(all_asset_list), len(asset_list)))
 
@@ -250,7 +251,7 @@ class TheGamesDB(Scraper):
         return url, url_log
 
     def resolve_asset_URL_extension(self, selected_asset, image_url, status_dic):
-        return text.get_URL_extension(image_url)
+        return io.get_URL_extension(image_url)
 
     # --- This class own methods -----------------------------------------------------------------
     def debug_get_platforms(self, status_dic):
@@ -280,7 +281,7 @@ class TheGamesDB(Scraper):
         # quote_plus() will convert the spaces into '+'. Note that quote_plus() requires an
         # UTF-8 encoded string and does not work with Unicode strings.
         # https://stackoverflow.com/questions/22415345/using-pythons-urllib-quote-plus-on-utf-8-strings-with-safe-arguments
-        search_string_encoded = urllib.quote_plus(search_term.encode('utf8'))
+        search_string_encoded = quote_plus(search_term)
         url_tail = '?apikey={}&name={}&filter[platform]={}'.format(
             self._get_API_key(), search_string_encoded, scraper_platform)
         url = TheGamesDB.URL_ByGameName + url_tail
@@ -298,7 +299,7 @@ class TheGamesDB(Scraper):
     # Return a list of candiate games.
     # Return None if error/exception.
     # Return empty list if no candidates found.
-    def _retrieve_games_from_url(self, url, search_term, platform, scraper_platform, status_dic):
+    def _retrieve_games_from_url(self, url, search_term:str, platform:str, scraper_platform, status_dic):
         # --- Get URL data as JSON ---
         json_data = self._retrieve_URL_as_JSON(url, status_dic)
         # If status_dic mark an error there was an exception. Return None.
@@ -338,7 +339,7 @@ class TheGamesDB(Scraper):
         return candidate_list
 
     # Not used at the moment, I think.
-    def _cleanup_searchterm(self, search_term, rom_path, rom):
+    def _cleanup_searchterm(self, search_term:str, rom_path, rom):
         altered_term = search_term.lower().strip()
         for ext in self.launcher.get_rom_extensions():
             altered_term = altered_term.replace(ext, '')
@@ -424,9 +425,9 @@ class TheGamesDB(Scraper):
     # TGDB genres are cached in an object variable.
     def _retrieve_genres(self, status_dic):
         # --- Cache hit ---
-        if self._check_global_cache(Scraper.GLOBAL_CACHE_TGDB_GENRES):
+        if self._check_global_cache(TheGamesDB.GLOBAL_CACHE_TGDB_GENRES):
             logger.debug('TheGamesDB._retrieve_genres() Genres global cache hit.')
-            return self._retrieve_global_cache(Scraper.GLOBAL_CACHE_TGDB_GENRES)
+            return self._retrieve_global_cache(TheGamesDB.GLOBAL_CACHE_TGDB_GENRES)
 
         # --- Cache miss. Retrieve data ---
         logger.debug('TheGamesDB._retrieve_genres() Genres global cache miss. Retrieving genres...')
@@ -443,15 +444,15 @@ class TheGamesDB(Scraper):
         for genre_id in page_data['data']['genres']:
             genres[genre_id] = page_data['data']['genres'][genre_id]['name']
         logger.debug('TheGamesDB._retrieve_genres() There are {} genres'.format(len(genres)))
-        self._update_global_cache(Scraper.GLOBAL_CACHE_TGDB_GENRES, genres)
+        self._update_global_cache(TheGamesDB.GLOBAL_CACHE_TGDB_GENRES, genres)
 
         return genres
 
     def _retrieve_developers(self, status_dic):
         # --- Cache hit ---
-        if self._check_global_cache(Scraper.GLOBAL_CACHE_TGDB_DEVELOPERS):
+        if self._check_global_cache(TheGamesDB.GLOBAL_CACHE_TGDB_DEVELOPERS):
             logger.debug('TheGamesDB._retrieve_developers() Genres global cache hit.')
-            return self._retrieve_global_cache(Scraper.GLOBAL_CACHE_TGDB_DEVELOPERS)
+            return self._retrieve_global_cache(TheGamesDB.GLOBAL_CACHE_TGDB_DEVELOPERS)
 
         # --- Cache miss. Retrieve data ---
         logger.debug('TheGamesDB._retrieve_developers() Developers global cache miss. Retrieving developers...')
@@ -465,7 +466,7 @@ class TheGamesDB(Scraper):
         for developer_id in page_data['data']['developers']:
             developers[developer_id] = page_data['data']['developers'][developer_id]['name']
         logger.debug('TheGamesDB._retrieve_developers() There are {} developers'.format(len(developers)))
-        self._update_global_cache(Scraper.GLOBAL_CACHE_TGDB_DEVELOPERS, developers)
+        self._update_global_cache(TheGamesDB.GLOBAL_CACHE_TGDB_DEVELOPERS, developers)
 
         return developers
 
