@@ -45,7 +45,7 @@ def run_plugin():
     if io.is_linux():   logger.info('OS               "Linux"')
     for i in range(len(sys.argv)): logger.info('sys.argv[{}] "{}"'.format(i, sys.argv[i]))
     
-    parser = argparse.ArgumentParser(prog='script.ael.defaults')
+    parser = argparse.ArgumentParser(prog='script.ael.tgdbscraper')
     parser.add_argument('--cmd', help="Command to execute", choices=['launch', 'scan', 'scrape', 'configure'])
     parser.add_argument('--type',help="Plugin type", choices=['LAUNCHER', 'SCANNER', 'SCRAPER'], default=constants.AddonType.LAUNCHER.name)
     parser.add_argument('--server_host', type=str, help="Host")
@@ -61,26 +61,17 @@ def run_plugin():
         logger.error('Exception in plugin', exc_info=ex)
         kodi.dialog_OK(text=parser.usage)
         return
-    
-    if args.type != constants.AddonType.SCRAPER.name:
-        kodi.dialog_OK('Only supporting SCRAPER')
-        return
-    
-    if args.cmd != 'scrape':
-        kodi.dialog_OK('Only supporting scrape cmd')
-        return
-    
-    if args.rom_id is not None:
-        run_rom_scraper(args)
+        
+    if args.type == constants.AddonType.SCRAPER.name and args.cmd == 'scrape': run_scraper(args)
     else:
-        run_collection_scraper(args)
-    
+        kodi.dialog_OK(text=parser.format_help())
+        
     logger.debug('Advanced Emulator Launcher Plugin: TGDB Scraper -> exit')
 
 # ---------------------------------------------------------------------------------------------
 # Scraper methods.
 # ---------------------------------------------------------------------------------------------
-def run_rom_scraper(args):
+def run_scraper(args):
     logger.debug('========== run_scraper() BEGIN ==================================================')
     pdialog             = kodi.ProgressDialog()
     
@@ -106,9 +97,6 @@ def run_rom_scraper(args):
         scraper_strategy.store_scraped_roms(args.ael_addon_id, scraped_roms)
         pdialog.endProgress()
 
-def run_collection_scraper(args):
-    pass
-        
 # ---------------------------------------------------------------------------------------------
 # RUN
 # ---------------------------------------------------------------------------------------------
