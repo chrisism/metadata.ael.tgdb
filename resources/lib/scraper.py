@@ -87,9 +87,12 @@ class TheGamesDB(Scraper):
         # --- This scraper settings ---
         # Make sure this is the public key (limited by IP) and not the private key.
         self.api_public_key = '828be1fb8f3182d055f1aed1f7d4da8bd4ebc160c3260eae8ee57ea823b42415'
+        self.api_key = settings.getSetting('thegamesdb_apikey')
         
-        if settings.getSetting('thegamesdb_apikey') is not None:
-            self.api_public_key = settings.getSetting('thegamesdb_apikey')
+        if self.api_key is None or self.api_key == '':
+            self.api_key = self.api_public_key
+            logger.info('Applied embedded public API key')
+        else:
             logger.info('Applied API key from settings')
             
         # --- Cached TGDB metadata ---
@@ -274,7 +277,7 @@ class TheGamesDB(Scraper):
 
     # Always use the developer public key which is limited per IP address. This function
     # may return the private key during scraper development for debugging purposes.
-    def _get_API_key(self): return self.api_public_key
+    def _get_API_key(self): return self.api_key
 
     # --- Retrieve list of games ---
     def _search_candidates(self, search_term, platform, scraper_platform, status_dic):
@@ -324,7 +327,7 @@ class TheGamesDB(Scraper):
             # Increase search score based on our own search.
             if title.lower() == search_term.lower():                  candidate['order'] += 2
             if title.lower().find(search_term.lower()) != -1:         candidate['order'] += 1
-            if scraper_platform > 0 and platform == scraper_platform: candidate['order'] += 1
+            if scraper_platform != '0' and platform == scraper_platform: candidate['order'] += 1
             candidate_list.append(candidate)
 
         logger.debug('TheGamesDB:: Found {0} titles with last request'.format(len(candidate_list)))
@@ -351,9 +354,9 @@ class TheGamesDB(Scraper):
     #     { "text" : "Super Mario World", "region" : "us" },
     #     ...
     # ]
-    def _parse_metadata_title(self, jeu_dic):
-        if 'game_title' in jeu_dic and jeu_dic['game_title'] is not None:
-            title_str = jeu_dic['game_title']
+    def _parse_metadata_title(self, game_dic):
+        if 'game_title' in game_dic and game_dic['game_title'] is not None:
+            title_str = game_dic['game_title']
         else:
             title_str = constants.DEFAULT_META_TITLE
 
