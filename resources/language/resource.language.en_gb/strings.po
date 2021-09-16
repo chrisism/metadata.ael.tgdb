@@ -26,6 +26,10 @@ msgctxt "#30101"
 msgid "TheGamesDB API key"
 msgstr "settings.xml"
 
+msgctxt "#30102"
+msgid "Cache directory"
+msgstr "settings.xml"
+
 msgctxt "#30129"
 msgid "Log level"
 msgstr "settings.xml"

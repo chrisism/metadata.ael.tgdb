@@ -13,9 +13,16 @@
                         <heading>30101</heading>
                     </control>
                 </setting>
-                <setting id="scraper_cache_dir" type="string" label="Cache directory" help="">
+                <setting id="scraper_cache_dir" type="path" label="30102" help="">
                     <level>1</level>
                     <default></default>
+                    <constraints>
+                        <writable>true</writable>
+                        <allowempty>true</allowempty>
+                    </constraints>
+                    <control type="button" format="path">
+                        <heading>30102</heading>
+                    </control>
                 </setting>
                 <setting id="log_level" type="integer" label="30129" help="">
                     <level>1</level>
