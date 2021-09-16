@@ -143,7 +143,7 @@ class TheGamesDB(Scraper):
         rombase_noext = rom_FN.getBaseNoExt()
 
         # --- Get candidates ---
-        scraper_platform = platforms.AEL_platform_to_TheGamesDB(platform)
+        scraper_platform = convert_AEL_platform_to_TheGamesDB(platform)
         logger.debug('TheGamesDB.get_candidates() search_term         "{}"'.format(search_term))
         logger.debug('TheGamesDB.get_candidates() rombase_noext       "{}"'.format(rombase_noext))
         logger.debug('TheGamesDB.get_candidates() AEL platform        "{}"'.format(platform))
@@ -280,7 +280,7 @@ class TheGamesDB(Scraper):
     def _get_API_key(self): return self.api_key
 
     # --- Retrieve list of games ---
-    def _search_candidates(self, search_term, platform, scraper_platform, status_dic):
+    def _search_candidates(self, search_term:str, platform:str, scraper_platform:int, status_dic):
         # quote_plus() will convert the spaces into '+'. Note that quote_plus() requires an
         # UTF-8 encoded string and does not work with Unicode strings.
         # https://stackoverflow.com/questions/22415345/using-pythons-urllib-quote-plus-on-utf-8-strings-with-safe-arguments
@@ -302,7 +302,7 @@ class TheGamesDB(Scraper):
     # Return a list of candiate games.
     # Return None if error/exception.
     # Return empty list if no candidates found.
-    def _retrieve_games_from_url(self, url, search_term:str, platform:str, scraper_platform, status_dic):
+    def _retrieve_games_from_url(self, url, search_term:str, platform:str, scraper_platform:int, status_dic):
         # --- Get URL data as JSON ---
         json_data = self._retrieve_URL_as_JSON(url, status_dic)
         # If status_dic mark an error there was an exception. Return None.
@@ -315,14 +315,12 @@ class TheGamesDB(Scraper):
         games_json = json_data['data']['games']
         candidate_list = []
         for item in games_json:
-            title = item['game_title']
-                
-            platforms.
-            scraper_platform = platforms.AEL_platform_to_TheGamesDB(platform)
+            title = item['game_title']            
+            scraped_ael_platform = convert_TheGamesDB_platform_to_AEL_platform(item['platform'])
             
             candidate = self._new_candidate_dic()
             candidate['id'] = item['id']
-            candidate['display_name'] = '{} ({})'.format(title, item['platform'])
+            candidate['display_name'] = '{} ({})'.format(title, scraped_ael_platform.long_name)
             candidate['platform'] = platform
             # Candidate platform may be different from scraper_platform if scraper_platform = 0
             # Always trust TGDB API about the platform of the returned candidates.
@@ -331,7 +329,8 @@ class TheGamesDB(Scraper):
             # Increase search score based on our own search.
             if title.lower() == search_term.lower():                  candidate['order'] += 2
             if title.lower().find(search_term.lower()) != -1:         candidate['order'] += 1
-            if scraper_platform != '0' and platform == scraper_platform: candidate['order'] += 1
+            if scraper_platform > 0 \
+                and platform == scraped_ael_platform.long_name:       candidate['order'] += 1
             candidate_list.append(candidate)
 
         logger.debug('TheGamesDB:: Found {0} titles with last request'.format(len(candidate_list)))
@@ -625,122 +624,111 @@ class TheGamesDB(Scraper):
         status_dic['msg'] = 'TGDB monthly/total allowance is {}. Scraper disabled.'.format(
             total_allowance)
 
-DEFAULT_PLAT_TGDB = '0'
+# ------------------------------------------------------------------------------------------------
+# TheGamesDB supported platforms mapped to AEL platforms.
+# ------------------------------------------------------------------------------------------------
+DEFAULT_PLAT_TGDB = 0
 # NOTE must take into account platform aliases.
 # '0' means any platform in TGDB and must be returned when there is no platform matching.
-def AEL_platform_to_TheGamesDB(platform_long_name):
-    if platform_long_name in platform_long_to_index_dic:
-        pobj = AEL_platforms[platform_long_to_index_dic[platform_long_name]]
-    else:
-        # Platform not found.
-        return DEFAULT_PLAT_TGDB
-    scraper_platform = pobj.TGDB_plat
-    # Check if platform is an alias.
-    # If alias does not have specific platform return platform of parent.
-    if pobj.aliasof is not None and scraper_platform is None:
-        parent_idx = platform_compact_to_index_dic[pobj.aliasof]
-        parent_long_name = AEL_platforms[parent_idx].long_name
-        return AEL_platform_to_TheGamesDB(parent_long_name)
-
-    # If platform is None then return default platform
-    return DEFAULT_PLAT_TGDB if scraper_platform is None else scraper_platform
-
-class TGDBPlatformMapping:
-    def __init__(self, platform:platforms.Platform, TGDB_plat = None):
-        # Autocompleted later with data from the short name.
-        # Short names are "category-compact_name"
-        self.platform   = platform
-        self.TGDB_plat  = TGDB_plat
+def convert_AEL_platform_to_TheGamesDB(platform_long_name) -> int:
+    matching_platform = platforms.get_AEL_platform(platform_long_name)
+    if matching_platform.compact_name in AEL_compact_platform_TGDB_mapping:
+        return AEL_compact_platform_TGDB_mapping[matching_platform.compact_name]
+    
+    if matching_platform.aliasof is not None and matching_platform.aliasof in AEL_compact_platform_TGDB_mapping:
+        return AEL_compact_platform_TGDB_mapping[matching_platform.aliasof]
         
-AEL_platform_TGDB_mapping = [
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('3do'), '25'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('cpc'), '4914'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('a2600'), '22'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('a5200'), '26'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('a7800'), '27'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('atari-8bit'), '30'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('jaguar'), '28'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('jaguarcd'), '29'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('lynx'), '4924'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('atari-st'), '4937'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('wswan'), '4925'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('wswancolor'), '4926'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('pv1000'), '4964'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('cvision'), '31'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('c64'), '40'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('amiga'), '4911'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('cd32'), '4947'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('vic20'), '4945'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('arcadia2001'), '4963'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('avision'), '4974'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('scvision'), '4966'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('channelf'), '4928'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('fmtmarty'), '4932'),
-    TGDBPlatformMapping(platforms.get_AEL_platform_by_compact('vectrex'), '4939'),
-    TGDBPlatformMapping('Magnavox Odyssey2', 'console-odyssey2', 'odyssey2', None, '4927'),
-    TGDBPlatformMapping(platforms.PLATFORM_MAME_LONG, platforms.PLATFORM_MAME_SHORT, platforms.PLATFORM_MAME_COMPACT, None, '23'),
-    TGDBPlatformMapping('Mattel Intellivision', 'console-ivision', 'ivision', None, '32'),
-    TGDBPlatformMapping('Microsoft MS-DOS', 'microsoft-msdos', 'msdos', None, '1'),
-    TGDBPlatformMapping('Microsoft MSX', 'microsoft-msx', 'msx', None, '4929'),
-    TGDBPlatformMapping('Microsoft MSX2', 'microsoft-msx2', 'msx2', None, '4929'),
-    TGDBPlatformMapping('Microsoft Windows', 'microsoft-windows', 'windows', None, '1'),
-    TGDBPlatformMapping('Microsoft Xbox', 'microsoft-xbox', 'xbox', None, '14'),
-    TGDBPlatformMapping('Microsoft Xbox 360', 'microsoft-xbox360', 'xbox360', None, '15'),
-    TGDBPlatformMapping('Microsoft Xbox One', 'microsoft-xboxone', 'xboxone', None, '4920'),
-    TGDBPlatformMapping('NEC PC Engine', 'nec-pce', 'pce', None, '34'),
-    TGDBPlatformMapping('NEC PC Engine CDROM2', 'nec-pcecd', 'pcecd', None, '4955'),
-    TGDBPlatformMapping('NEC PC-FX', 'nec-pcfx', 'pcfx', None, '4930'),
-    TGDBPlatformMapping('NEC SuperGrafx', 'nec-sgx', 'sgx', None, '34'),
-    TGDBPlatformMapping('Nintendo 3DS', 'nintendo-n3ds', 'n3ds', None, '4912'),
-    TGDBPlatformMapping('Nintendo 64', 'nintendo-n64', 'n64', None, '3'),
-    TGDBPlatformMapping('Nintendo 64DD', 'nintendo-n64dd', 'n64dd', None, '3'),
-    TGDBPlatformMapping('Nintendo DS', 'nintendo-nds', 'nds', None, '8'),
-    TGDBPlatformMapping('Nintendo DSi', 'nintendo-ndsi', 'ndsi', None, '8'),
-    TGDBPlatformMapping('Nintendo Famicon Disk System', 'nintendo-fds', 'fds', None, '4936'),
-    TGDBPlatformMapping('Nintendo GameBoy', 'nintendo-gb', 'gb', None, '4'),
-    TGDBPlatformMapping('Nintendo GameBoy Advance', 'nintendo-gba', 'gba', None, '5'),
-    TGDBPlatformMapping('Nintendo GameBoy Color', 'nintendo-gbcolor', 'gbcolor', None, '41'),
-    TGDBPlatformMapping('Nintendo GameCube', 'nintendo-gamecube', 'gamecube', None, '2'),
-    TGDBPlatformMapping('Nintendo NES', 'nintendo-nes', 'nes', None, '7'),
-    TGDBPlatformMapping('Nintendo Pokemon Mini', 'nintendo-pokemini', 'pokemini', None, '4957'),
-    TGDBPlatformMapping('Nintendo SNES', 'nintendo-snes', 'snes', None, '6'),
-    TGDBPlatformMapping('Nintendo Switch', 'nintendo-switch', 'switch', None, '4971'),
-    TGDBPlatformMapping('Nintendo Virtual Boy', 'nintendo-vb', 'vb', None, '4918'),
-    TGDBPlatformMapping('Nintendo Wii', 'nintendo-wii', 'wii', None, '9'),
-    TGDBPlatformMapping('Nintendo Wii U', 'nintendo-wiiu', 'wiiu', None, '38'),
-
-    TGDBPlatformMapping('Ouya Ouya', 'console-ouya', 'ouya', None, '4921'),
-
-    TGDBPlatformMapping('RCA Studio II', 'console-studio2', 'studio2', None, '4967'),
-    TGDBPlatformMapping('Sega 32X', 'sega-32x', '32x', None, '33'),
-    TGDBPlatformMapping('Sega Dreamcast', 'sega-dreamcast', 'dreamcast', None, '16'),
-    TGDBPlatformMapping('Sega Game Gear', 'sega-gamegear', 'gamegear', None, '20'),
-    TGDBPlatformMapping('Sega Master System', 'sega-sms', 'sms', None, '35'),
-    TGDBPlatformMapping('Sega Mega Drive', 'sega-megadrive', 'megadrive', None, '36'),
-    TGDBPlatformMapping('Sega MegaCD', 'sega-megacd', 'megacd', None, '21'),
-    TGDBPlatformMapping('Sega PICO', 'sega-pico', 'pico', None, '4958'),
-    TGDBPlatformMapping('Sega Saturn', 'sega-saturn', 'saturn', None, '17'),
-    TGDBPlatformMapping('Sega SG-1000', 'sega-sg1000', 'sg1000', None, '4949'),
-    TGDBPlatformMapping('Sharp X68000', 'computer-x68k', 'x68k', None, '4931'),
-    TGDBPlatformMapping('Sinclair ZX Spectrum', 'computer-spectrum', 'spectrum', None, '4913'),
-    TGDBPlatformMapping('SNK Neo-Geo CD', 'snk-neocd', 'neocd', None, '4956'),
-    TGDBPlatformMapping('SNK Neo-Geo MVS', 'snk-mvs', 'mvs', 'mame'),
-    TGDBPlatformMapping('SNK Neo-Geo Pocket', 'snk-ngp', 'ngp', None, '4922'),
-    TGDBPlatformMapping('SNK Neo-Geo Pocket Color', 'snk-ngpcolor', 'ngpcolor', None, '4923'),
-    TGDBPlatformMapping('Sony PlayStation', 'sony-psx', 'psx', None, '10'),
-    TGDBPlatformMapping('Sony PlayStation 2', 'sony-ps2', 'ps2', None, '11'),
-    TGDBPlatformMapping('Sony PlayStation 3', 'sony-ps3', 'ps3', None, '12'),
-    TGDBPlatformMapping('Sony PlayStation 4', 'sony-ps4', 'ps4', None, '4919'),
-    TGDBPlatformMapping('Sony PlayStation Portable', 'sony-psp', 'psp', None, '13'),
-    TGDBPlatformMapping('Sony PlayStation Vita', 'sony-psvita', 'psvita', None, '39'),
-
-    TGDBPlatformMapping('Tiger Game.com', 'console-tigergame', 'tigergame', None, '4940'),
-    TGDBPlatformMapping('VTech CreatiVision', 'console-creativision', 'creativision', None, None, '212'),
-    TGDBPlatformMapping('VTech V.Flash', 'console-vflash', 'vflash', None, None, '189'),
-    TGDBPlatformMapping('VTech V.Smile', 'console-vsmile', 'vsmile', None, None, '42'),
-    TGDBPlatformMapping('Watara Supervision', 'console-supervision', 'supervision', None, '4959'),
-    TGDBPlatformMapping('Zeebo Zeebo', 'console-zeebo', 'zeebo', None, None, '88'),
-
-    # --- Unknown ---
-    TGDBPlatformMapping(TGDBPlatformMapping_UNKNOWN_LONG, TGDBPlatformMapping_UNKNOWN_SHORT, TGDBPlatformMapping_UNKNOWN_COMPACT),
-]
+    # Platform not found.
+    return DEFAULT_PLAT_TGDB
+        
+def convert_TheGamesDB_platform_to_AEL_platform(tgdb_platform:int) -> platforms.Platform:
+    if tgdb_platform in TGDB_AEL_compact_platform_mapping:
+        platform_compact_name = TGDB_AEL_compact_platform_mapping[tgdb_platform]
+        return platforms.get_AEL_platform_by_compact(platform_compact_name)
+        
+    return platforms.get_AEL_platform_by_compact(platforms.PLATFORM_UNKNOWN_COMPACT)
+        
+AEL_compact_platform_TGDB_mapping = {
+    '3do':25,
+    'cpc':4914,
+    'a2600':22,
+    'a5200':26,
+    'a7800':27,
+    'atari-8bit':30,
+    'jaguar':28,
+    'jaguarcd':29,
+    'lynx':4924,
+    'atari-st':4937,
+    'wswan':4925,
+    'wswancolor':4926,
+    'pv1000':4964,
+    'cvision':31,
+    'c64':40,
+    'amiga':4911,
+    'cd32':4947,
+    'vic20':4945,
+    'arcadia2001':4963,
+    'avision':4974,
+    'scvision':4966,
+    'channelf':4928,
+    'fmtmarty':4932,
+    'vectrex':4939,
+    'odyssey2':4927,
+    platforms.PLATFORM_MAME_COMPACT:23,
+    'ivision':32,
+    'msdos':1,
+    'msx':4929,
+    'msx2':4929,
+    'windows':1,
+    'xbox':14,
+    'xbox360':15,
+    'xboxone':4920,
+    'pce':34,
+    'pcecd':4955,
+    'pcfx':4930,
+    'sgx':34,
+    'n3ds':4912,
+    'n64':3,
+    'n64dd':3,
+    'nds':8,
+    'ndsi':8,
+    'fds':4936,
+    'gb':4,
+    'gba':5,
+    'gbcolor':41,
+    'gamecube':2,
+    'nes':7,
+    'pokemini':4957,
+    'snes':6,
+    'switch':4971,
+    'vb':4918,
+    'wii':9,
+    'wiiu':38,
+    'ouya':4921,
+    'studio2':4967,
+    '32x':33,
+    'dreamcast':16,
+    'gamegear':20,
+    'sms':35,
+    'megadrive':36,
+    'megacd':21,
+    'pico':4958,
+    'saturn':17,
+    'sg1000':4949,
+    'x68k':4931,
+    'spectrum':4913,
+    'neocd':4956,
+    'ngp':4922,
+    'ngpcolor':4923,
+    'psx':10,
+    'ps2':11,
+    'ps3':12,
+    'ps4':4919,
+    'psp':13,
+    'psvita':39,
+    'tigergame':4940,
+    'supervision':4959
+}
+TGDB_AEL_compact_platform_mapping = {}
+for key, value in AEL_compact_platform_TGDB_mapping.items():
+    TGDB_AEL_compact_platform_mapping[value] = key
