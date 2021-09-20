@@ -1,6 +1,6 @@
 # Kodi Media Center language file
 # Addon Name: TGDB scraper for AEL
-# Addon id: metadata.ael.tgdb
+# Addon id: script.ael.tgdb
 msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
