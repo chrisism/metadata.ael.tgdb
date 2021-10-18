@@ -106,7 +106,10 @@ class TheGamesDB(Scraper):
         self.publishers_cached = {}
 
         cache_dir = settings.getSetting('scraper_cache_dir')
-        # --- Pass down common scraper settings ---
+        
+        self.GLOBAL_CACHE_LIST.append(self.GLOBAL_CACHE_TGDB_GENRES)
+        self.GLOBAL_CACHE_LIST.append(self.GLOBAL_CACHE_TGDB_DEVELOPERS)
+                
         super(TheGamesDB, self).__init__(cache_dir)
     
     # --- Base class abstract methods ------------------------------------------------------------
