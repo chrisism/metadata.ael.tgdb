@@ -31,6 +31,7 @@ from urllib.parse import quote_plus
 from ael import constants, platforms, settings
 from ael.utils import io, net, kodi
 from ael.scrapers import Scraper
+from ael.api import ROMObj
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +136,7 @@ class TheGamesDB(Scraper):
     # operation so return it as it is.
     def check_before_scraping(self, status_dic): return status_dic
 
-    def get_candidates(self, search_term, rom_FN: io.FileName, rom_checksums_FN, platform, status_dic):
+    def get_candidates(self, search_term, rom: ROMObj, platform, status_dic):
         # If the scraper is disabled return None and do not mark error in status_dic.
         # Candidate will not be introduced in the disk cache and will be scraped again.
         if self.scraper_disabled:
@@ -143,12 +144,10 @@ class TheGamesDB(Scraper):
             return None
 
         # Prepare data for scraping.
-        rombase_noext = rom_FN.getBaseNoExt()
-
         # --- Get candidates ---
         scraper_platform = convert_AEL_platform_to_TheGamesDB(platform)
         logger.debug('TheGamesDB.get_candidates() search_term         "{}"'.format(search_term))
-        logger.debug('TheGamesDB.get_candidates() rombase_noext       "{}"'.format(rombase_noext))
+        logger.debug('TheGamesDB.get_candidates() rom identifier      "{}"'.format(rom.get_identifier()))
         logger.debug('TheGamesDB.get_candidates() AEL platform        "{}"'.format(platform))
         logger.debug('TheGamesDB.get_candidates() TheGamesDB platform "{}"'.format(scraper_platform))
         candidate_list = self._search_candidates(search_term, platform, scraper_platform, status_dic)
