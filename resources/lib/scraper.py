@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Advanced Emulator Launcher scraping engine for TGDB.
+# Advanced Kodi Launcher scraping engine for TGDB.
 #
 # --- Information about scraping ---
 # https://github.com/muldjord/skyscraper
