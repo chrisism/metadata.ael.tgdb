@@ -27,11 +27,11 @@ import re
 
 from urllib.parse import quote_plus
 
-# --- AEL packages ---
-from ael import constants, platforms, settings
-from ael.utils import io, net, kodi
-from ael.scrapers import Scraper
-from ael.api import ROMObj
+# --- AKL packages ---
+from akl import constants, platforms, settings
+from akl.utils import io, net, kodi
+from akl.scrapers import Scraper
+from akl.api import ROMObj
 
 logger = logging.getLogger(__name__)
 
@@ -145,10 +145,10 @@ class TheGamesDB(Scraper):
 
         # Prepare data for scraping.
         # --- Get candidates ---
-        scraper_platform = convert_AEL_platform_to_TheGamesDB(platform)
+        scraper_platform = convert_AKL_platform_to_TheGamesDB(platform)
         logger.debug('TheGamesDB.get_candidates() search_term         "{}"'.format(search_term))
         logger.debug('TheGamesDB.get_candidates() rom identifier      "{}"'.format(rom.get_identifier()))
-        logger.debug('TheGamesDB.get_candidates() AEL platform        "{}"'.format(platform))
+        logger.debug('TheGamesDB.get_candidates() AKL platform        "{}"'.format(platform))
         logger.debug('TheGamesDB.get_candidates() TheGamesDB platform "{}"'.format(scraper_platform))
         candidate_list = self._search_candidates(search_term, platform, scraper_platform, status_dic)
         if not status_dic['status']: return None
@@ -318,11 +318,11 @@ class TheGamesDB(Scraper):
         candidate_list = []
         for item in games_json:
             title = item['game_title']            
-            scraped_ael_platform = convert_TheGamesDB_platform_to_AEL_platform(item['platform'])
+            scraped_akl_platform = convert_TheGamesDB_platform_to_AKL_platform(item['platform'])
             
             candidate = self._new_candidate_dic()
             candidate['id'] = item['id']
-            candidate['display_name'] = '{} ({})'.format(title, scraped_ael_platform.long_name)
+            candidate['display_name'] = '{} ({})'.format(title, scraped_akl_platform.long_name)
             candidate['platform'] = platform
             # Candidate platform may be different from scraper_platform if scraper_platform = 0
             # Always trust TGDB API about the platform of the returned candidates.
@@ -332,7 +332,7 @@ class TheGamesDB(Scraper):
             if title.lower() == search_term.lower():                  candidate['order'] += 2
             if title.lower().find(search_term.lower()) != -1:         candidate['order'] += 1
             if scraper_platform > 0 \
-                and platform == scraped_ael_platform.long_name:       candidate['order'] += 1
+                and platform == scraped_akl_platform.long_name:       candidate['order'] += 1
             candidate_list.append(candidate)
 
         logger.debug('TheGamesDB:: Found {0} titles with last request'.format(len(candidate_list)))
@@ -422,7 +422,7 @@ class TheGamesDB(Scraper):
 
         return plot_str
 
-    # Get a dictionary of TGDB genres (integers) to AEL genres (strings).
+    # Get a dictionary of TGDB genres (integers) to AKL genres (strings).
     # TGDB genres are cached in an object variable.
     def _retrieve_genres(self, status_dic):
         # --- Cache hit ---
@@ -471,7 +471,7 @@ class TheGamesDB(Scraper):
 
         return developers
 
-    # Publishers is not used in AEL at the moment.
+    # Publishers is not used in AKL at the moment.
     # THIS FUNCTION CODE MUST BE UPDATED.
     def _retrieve_publishers(self, publisher_ids):
         if publisher_ids is None: return ''
@@ -627,30 +627,30 @@ class TheGamesDB(Scraper):
             total_allowance)
 
 # ------------------------------------------------------------------------------------------------
-# TheGamesDB supported platforms mapped to AEL platforms.
+# TheGamesDB supported platforms mapped to AKL platforms.
 # ------------------------------------------------------------------------------------------------
 DEFAULT_PLAT_TGDB = 0
 # NOTE must take into account platform aliases.
 # '0' means any platform in TGDB and must be returned when there is no platform matching.
-def convert_AEL_platform_to_TheGamesDB(platform_long_name) -> int:
-    matching_platform = platforms.get_AEL_platform(platform_long_name)
-    if matching_platform.compact_name in AEL_compact_platform_TGDB_mapping:
-        return AEL_compact_platform_TGDB_mapping[matching_platform.compact_name]
+def convert_AKL_platform_to_TheGamesDB(platform_long_name) -> int:
+    matching_platform = platforms.get_AKL_platform(platform_long_name)
+    if matching_platform.compact_name in AKL_compact_platform_TGDB_mapping:
+        return AKL_compact_platform_TGDB_mapping[matching_platform.compact_name]
     
-    if matching_platform.aliasof is not None and matching_platform.aliasof in AEL_compact_platform_TGDB_mapping:
-        return AEL_compact_platform_TGDB_mapping[matching_platform.aliasof]
+    if matching_platform.aliasof is not None and matching_platform.aliasof in AKL_compact_platform_TGDB_mapping:
+        return AKL_compact_platform_TGDB_mapping[matching_platform.aliasof]
         
     # Platform not found.
     return DEFAULT_PLAT_TGDB
         
-def convert_TheGamesDB_platform_to_AEL_platform(tgdb_platform:int) -> platforms.Platform:
-    if tgdb_platform in TGDB_AEL_compact_platform_mapping:
-        platform_compact_name = TGDB_AEL_compact_platform_mapping[tgdb_platform]
-        return platforms.get_AEL_platform_by_compact(platform_compact_name)
+def convert_TheGamesDB_platform_to_AKL_platform(tgdb_platform:int) -> platforms.Platform:
+    if tgdb_platform in TGDB_AKL_compact_platform_mapping:
+        platform_compact_name = TGDB_AKL_compact_platform_mapping[tgdb_platform]
+        return platforms.get_AKL_platform_by_compact(platform_compact_name)
         
-    return platforms.get_AEL_platform_by_compact(platforms.PLATFORM_UNKNOWN_COMPACT)
+    return platforms.get_AKL_platform_by_compact(platforms.PLATFORM_UNKNOWN_COMPACT)
         
-AEL_compact_platform_TGDB_mapping = {
+AKL_compact_platform_TGDB_mapping = {
     '3do':25,
     'cpc':4914,
     'a2600':22,
@@ -731,6 +731,6 @@ AEL_compact_platform_TGDB_mapping = {
     'tigergame':4940,
     'supervision':4959
 }
-TGDB_AEL_compact_platform_mapping = {}
-for key, value in AEL_compact_platform_TGDB_mapping.items():
-    TGDB_AEL_compact_platform_mapping[value] = key
+TGDB_AKL_compact_platform_mapping = {}
+for key, value in AKL_compact_platform_TGDB_mapping.items():
+    TGDB_AKL_compact_platform_mapping[value] = key
