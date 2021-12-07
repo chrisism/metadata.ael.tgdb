@@ -24,9 +24,9 @@ logging.basicConfig(format = '%(asctime)s %(module)s %(levelname)s: %(message)s'
                 datefmt = '%m/%d/%Y %I:%M:%S %p', level = logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-from resources.lib.scraper import TheGamesDB, AEL_compact_platform_TGDB_mapping
-from ael.utils import kodi, text, io
-from ael import constants, platforms
+from resources.lib.scraper import TheGamesDB, AKL_compact_platform_TGDB_mapping
+from akl.utils import kodi, text, io
+from akl import constants, platforms
 
 # --- Constants -----------------------------------------------------------------------------------
 CURRENT_DIR = io.FileName('./')
@@ -35,11 +35,11 @@ GAMEDB_JSON_BASE_NOEXT = 'GameDB_info'
 
 # --- main() --------------------------------------------------------------------------------------
 gamedb_info_dic = {}
-for platform in platforms.AEL_platforms:
+for platform in platforms.AKL_platforms:
     # print('Processing platform "{0}"'.format(platform))
 
     # >> Open XML file and count ROMs
-    xml_file = CURRENT_DIR.pjoin(AEL_compact_platform_TGDB_mapping[platform.compact_name] ).getPath()
+    xml_file = CURRENT_DIR.pjoin(AKL_compact_platform_TGDB_mapping[platform.compact_name] ).getPath()
     games = [] # TODO: audit_load_OfflineScraper_XML(xml_file)
 
     # >> Count ROMs and add to dictionary

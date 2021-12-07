@@ -1,7 +1,7 @@
 #!/usr/bin/python -B
 # -*- coding: utf-8 -*-
 #
-# Test AEL TheGamesDB metadata scraper.
+# Test AKL TheGamesDB metadata scraper.
 #
 
 # --- Python standard library ---
@@ -17,8 +17,8 @@ logging.basicConfig(format = '%(asctime)s %(module)s %(levelname)s: %(message)s'
 logger = logging.getLogger(__name__)
 
 from resources.lib.scraper import TheGamesDB
-from ael.utils import kodi, io
-from ael import constants
+from akl.utils import kodi, io
+from akl import constants
 # --- Test data -----------------------------------------------------------------------------------
 games = {
     # Console games

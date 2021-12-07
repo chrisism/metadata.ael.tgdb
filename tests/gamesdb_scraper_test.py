@@ -12,11 +12,11 @@ logging.basicConfig(format = '%(asctime)s %(module)s %(levelname)s: %(message)s'
 logger = logging.getLogger(__name__)
 
 from resources.lib.scraper import TheGamesDB
-from ael.scrapers import ScrapeStrategy, ScraperSettings
+from akl.scrapers import ScrapeStrategy, ScraperSettings
 
-from ael.api import ROMObj
-from ael import constants
-from ael.utils import net, io
+from akl.api import ROMObj
+from akl import constants
+from akl.utils import net, io
 
 def read_file(path):
     f = io.FileName(path)
@@ -78,7 +78,7 @@ class Test_gamesdb_scraper(unittest.TestCase):
         print('---------------------------------------------------------------------------')
     
     @patch('resources.lib.scraper.net.get_URL', side_effect = mocked_gamesdb)
-    @patch('ael.api.client_get_rom')
+    @patch('akl.api.client_get_rom')
     def test_scraping_metadata_for_game(self, api_rom_mock: MagicMock, mock_json_downloader):        
         # arrange
         settings = ScraperSettings()
@@ -107,7 +107,7 @@ class Test_gamesdb_scraper(unittest.TestCase):
     @patch('resources.lib.scraper.net.get_URL', side_effect = mocked_gamesdb)
     @patch('resources.lib.scraper.net.download_img')
     @patch('resources.lib.scraper.io.FileName.scanFilesInPath', autospec=True)
-    @patch('ael.api.client_get_rom')
+    @patch('akl.api.client_get_rom')
     def test_scraping_assets_for_game(self, api_rom_mock: MagicMock, scanner_mock, mock_img_downloader, mock_json_downloader):        
         # arrange
         settings = ScraperSettings()
