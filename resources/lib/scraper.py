@@ -24,6 +24,7 @@ from __future__ import division
 import logging
 import json
 import re
+from typing import Optional
 
 from urllib.parse import quote_plus
 
@@ -195,13 +196,16 @@ class TheGamesDB(Scraper):
         # | last_updated    | "last_updated": "2018-07-11 21:05:01" | No   |
         # | rating          | "rating": "M - Mature"                | Yes  |
         # | platform        | "platform": 1                         | No   |
-        # | coop            | "coop": "No"                          | No   |
-        # | youtube         | "youtube": "dR3Hm8scbEw"              | No   |
+        # | coop            | "coop": "No"                          | Yes  |
+        # | youtube         | "youtube": "dR3Hm8scbEw"              | Yes  |
         # | alternates      | "alternates": null                    | No   |
         # |-----------------|---------------------------------------|------|
         logger.debug('TheGamesDB.get_metadata() Metadata cache miss "{}"'.format(self.cache_key))
-        url_tail = '?apikey={}&id={}&fields=players%2Cgenres%2Coverview%2Crating'.format(
-            self._get_API_key(), self.candidate['id'])
+        fields = ['players', 'genres', 'overview', 'rating', 'coop', 
+            'youtube', 'hdd', 'video', 'sound']
+        fields_concat = '%2C'.join(fields)
+        id = self.candidate['id']
+        url_tail = f'?apikey={self._get_API_key()}&id={id}&fields={fields_concat}'
         url = TheGamesDB.URL_ByGameID + url_tail
         json_data = self._retrieve_URL_as_JSON(url, status_dic)
         if not status_dic['status']: return None
@@ -220,6 +224,8 @@ class TheGamesDB(Scraper):
         gamedata['nplayers']  = self._parse_metadata_nplayers(online_data)
         gamedata['esrb']      = self._parse_metadata_esrb(online_data)
         gamedata['plot']      = self._parse_metadata_plot(online_data)
+        gamedata['tags']      = self._parse_metadata_tags(online_data)
+        gamedata['trailer']   = self._parse_metadata_trailer(online_data)
 
         # --- Put metadata in the cache ---
         logger.debug('TheGamesDB.get_metadata() Adding to metadata cache "{}"'.format(self.cache_key))
@@ -421,6 +427,27 @@ class TheGamesDB(Scraper):
             plot_str = constants.DEFAULT_META_PLOT
 
         return plot_str
+
+    def _parse_metadata_tags(self, online_data:dict) -> list:
+        tags = []
+        if 'coop' in online_data and online_data['coop'] == 'Yes':
+            tags.append('co-op')
+        if 'hdd' in online_data and online_data['hdd'] != '':
+            hdd = online_data['hdd']
+            tags.append(f'hdd:{hdd}')
+        if 'video' in online_data and online_data['video'] != '':
+            tags.append(online_data['video'])
+        if 'sound' in online_data and online_data['sound'] != '':
+            tags.append(online_data['sound'])
+        return tags
+
+    def _parse_metadata_trailer(self, online_data:dict) -> str:
+        if not 'youtube' in online_data:
+            return None
+        
+        trailer_id = online_data['youtube']
+        if trailer_id == '': return None
+        return f'plugin://plugin.video.youtube/play/?video_id={trailer_id}'
 
     # Get a dictionary of TGDB genres (integers) to AKL genres (strings).
     # TGDB genres are cached in an object variable.
