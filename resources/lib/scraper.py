@@ -54,6 +54,7 @@ class TheGamesDB(Scraper):
         constants.META_NPLAYERS_ID,
         constants.META_ESRB_ID,
         constants.META_PLOT_ID,
+        constants.META_TAGS_ID
     ]
     supported_asset_list = [
         constants.ASSET_FANART_ID,
