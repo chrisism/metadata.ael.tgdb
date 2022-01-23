@@ -37,8 +37,8 @@ variables:
   addonName: script.akl.tgdbscraper
 
 stages:
-  displayName: Build stage
 - stage: Build
+  displayName: Build stage
   jobs:
     - job: build
       displayName: build
