@@ -108,7 +108,7 @@ class TheGamesDB(Scraper):
         self.developers_cached = {}
         self.publishers_cached = {}
 
-        cache_dir = settings.getSetting('scraper_cache_dir')
+        cache_dir = settings.getSettingAsFilePath('scraper_cache_dir')
         
         self.GLOBAL_CACHE_LIST.append(self.GLOBAL_CACHE_TGDB_GENRES)
         self.GLOBAL_CACHE_LIST.append(self.GLOBAL_CACHE_TGDB_DEVELOPERS)
