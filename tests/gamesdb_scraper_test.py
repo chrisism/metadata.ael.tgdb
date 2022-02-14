@@ -27,7 +27,7 @@ def read_file_as_json(path):
     file_data = read_file(path)
     return json.loads(file_data, encoding = 'utf-8')
 
-def mocked_gamesdb(url, url_clean=None):
+def mocked_gamesdb(url, url_clean=None, content_type=None):
 
     print(url)
     mocked_json_file = ''
@@ -55,11 +55,9 @@ def mocked_gamesdb(url, url_clean=None):
     if 'cdn.thegamesdb.net/' in url:
         return read_file(Test_gamesdb_scraper.TEST_ASSETS_DIR + "\\test.jpg")
 
-    if mocked_json_file == '':
-        return net.get_URL(url)
-
     print('reading mocked data from file: {}'.format(mocked_json_file))
-    return read_file(mocked_json_file), 200
+    file_data = read_file(mocked_json_file)
+    return json.loads(file_data), 200
 
 class Test_gamesdb_scraper(unittest.TestCase):
     

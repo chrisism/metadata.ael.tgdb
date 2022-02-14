@@ -506,8 +506,11 @@ class TheGamesDB(Scraper):
         if self.publishers is None:
             logger.debug('TheGamesDB. No cached publishers. Retrieving from online.')
             url = TheGamesDB.URL_Publishers + '?apikey={}'.format(self._get_API_key())
-            page_data_raw = net.get_URL(url, self._clean_URL_for_log(url))
-            publishers_json = json.loads(page_data_raw)
+            publishers_json, http_code = net.get_URL(url, self._clean_URL_for_log(url), content_type=net.ContentType.JSON)
+            if http_code != 200:
+                logger.warning("Failure retrieving publishers data.")
+                return ""
+
             self.publishers_cached = {}
             for publisher_id in publishers_json['data']['publishers']:
                 self.publishers_cached[int(publisher_id)] = publishers_json['data']['publishers'][publisher_id]['name']
@@ -596,12 +599,11 @@ class TheGamesDB(Scraper):
     # * When the API number of calls is exhausted TGDB ...
     # * When a game search is not succesfull TGDB returns valid JSON with an empty list.
     def _retrieve_URL_as_JSON(self, url, status_dic):
-        page_data_raw, http_code = net.get_URL(url, self._clean_URL_for_log(url))
+        json_data, http_code = net.get_URL(url, self._clean_URL_for_log(url), content_type=net.ContentType.JSON)
 
         # --- Check HTTP error codes ---
         if http_code != 200:
             try:
-                json_data = json.loads(page_data_raw)
                 error_msg = json_data['message']
             except:
                 error_msg = 'Unknown/unspecified error.'
@@ -609,17 +611,10 @@ class TheGamesDB(Scraper):
             self._handle_error(status_dic, 'HTTP code {} message "{}"'.format(http_code, error_msg))
             return None
 
-        # If page_data_raw is None at this point is because of an exception in net_get_URL()
+        # If json_data is None at this point is because of an exception in net_get_URL()
         # which is not urllib2.HTTPError.
-        if page_data_raw is None:
+        if json_data is None:
             self._handle_error(status_dic, 'TGDB: Network error in net_get_URL()')
-            return None
-
-        # Convert data to JSON.
-        try:
-            json_data = json.loads(page_data_raw)
-        except Exception as ex:
-            self._handle_exception(ex, status_dic, 'Error decoding JSON data from TGDB.')
             return None
 
         # Check for scraper overloading. Scraper is disabled if overloaded.
