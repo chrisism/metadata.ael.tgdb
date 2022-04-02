@@ -2,7 +2,7 @@
 <addon id="script.akl.tgdbscraper" name="TGDB scraper for AKL" version="0.0.3" provider-name="chrisism">
   <requires>
       <import addon="xbmc.python" version="3.0.0"/>
-      <import addon="script.module.akl" version="1.0.4"/>
+      <import addon="script.module.akl" version="1.0.5"/>
   </requires>
   <extension point="xbmc.python.script" library="default.py">
     <provides>game</provides>
@@ -23,6 +23,6 @@
       <icon>media/icon.png</icon>
       <fanart>media/fanart.jpg</fanart>
     </assets>
-    <news>See changelog.txt for information about the latest release.</news>
+    <news>See changelog.md for information about the latest release.</news>
   </extension>
 </addon>

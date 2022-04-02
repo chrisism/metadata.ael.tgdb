@@ -5,7 +5,6 @@ TheGamesDB scraper for AKL. This plugin can be used to scrape metadata and asset
 | Release | Status |
 |----|----|
 | Stable |[![Build Status](https://dev.azure.com/jnpro/AKL/_apis/build/status/script.akl.tgdbscraper?branchName=main)](https://dev.azure.com/jnpro/AKL/_build/latest?definitionId=8&branchName=main) |
-| Beta | [![Build Status](https://dev.azure.com/jnpro/AKL/_apis/build/status/script.akl.tgdbscraper?branchName=release/1.0.0)](https://dev.azure.com/jnpro/AKL/_build/latest?definitionId=8&branchName=release/1.0.0) |
 | Unstable | [![Build Status](https://dev.azure.com/jnpro/AKL/_apis/build/status/script.akl.tgdbscraper?branchName=dev)](https://dev.azure.com/jnpro/AKL/_build/latest?definitionId=8&branchName=dev) |
 
 ### Kodi forum thread ###
@@ -17,4 +16,5 @@ in the Kodi forum.
 
 ### Documentation ###
 
-Read more about AKL on the main plugin's [ReadMe](https://github.com/chrisism/plugin.program.akl/blob/master/README.md) page.
+Read more about AKL on the main plugin's [ReadMe](https://github.com/chrisism/plugin.program.akl/blob/master/README.md) page.  
+Information about the latest release of this plugin can be read in the [changelog](https://github.com/chrisism/script.module.akl/blob/master/changelog.md) page. Older releases can be found under the [releases](https://github.com/chrisism/script.module.akl/releases) page on github.
