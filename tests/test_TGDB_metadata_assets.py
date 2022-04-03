@@ -29,6 +29,7 @@ games = {
     'sonic_megaDrive'        : ('Sonic the Hedgehog', 'Sonic the Hedgehog (USA, Europe).zip', 'Sega Mega Drive'),
     'sonic_genesis'          : ('Sonic the Hedgehog', 'Sonic the Hedgehog (USA, Europe).zip', 'Sega Genesis'),
     'chakan'                 : ('Chakan', 'Chakan (USA, Europe).zip', 'Sega MegaDrive'),
+    'age_of_wonders_3'       : ('Age of wonders III', 'Age of wonders III', 'Microsoft Windows'),
     'ff7'                    : ('Final Fantasy VII', 'Final Fantasy VII (USA) (Disc 1).iso', 'Sony PlayStation'),
     'console_wrong_title'    : ('Console invalid game', 'mjhyewqr.zip', 'Sega MegaDrive'),
     'console_wrong_platform' : ('Sonic the Hedgehog', 'Sonic the Hedgehog (USA, Europe).zip', 'mjhyewqr'),
@@ -65,10 +66,12 @@ class Test_tgdb_metadata_assets(unittest.TestCase):
             os.makedirs(cls.TEST_OUTPUT_DIR)
     
     @unittest.skip('Actual API calls. Enable only if needed. Costs credits')
-    @patch('resources.lib.scraper.settings.getSetting', autospec=True)
-    def test_tgdb_metadata(self, settings_mock:MagicMock): 
+    @patch('akl.settings.getSettingAsFilePath', autospec=True)
+    @patch('akl.settings.getSetting', autospec=True)
+    def test_tgdb_metadata(self, settings_mock:MagicMock, settings_path_mock:MagicMock): 
         
-        settings_mock.side_effect = lambda key: self.TEST_OUTPUT_DIR if key == 'scraper_cache_dir' else ''
+        settings_path_mock.return_value = io.FileName(self.TEST_OUTPUT_DIR,isdir=True)
+        settings_mock.return_value = None
         
         # --- main ---------------------------------------------------------------------------------------
         print('*** Fetching candidate game list ********************************************************')
@@ -83,10 +86,11 @@ class Test_tgdb_metadata_assets(unittest.TestCase):
         # search_term, rombase, platform = common.games['metroid']
         # search_term, rombase, platform = common.games['mworld']
         #search_term, rombase, platform = common.games['sonic_megaDrive']
-        search_term, rombase, platform = games['sonic_genesis'] # Aliased platform
+        # search_term, rombase, platform = games['sonic_genesis'] # Aliased platform
         # search_term, rombase, platform = common.games['chakan']
         # search_term, rombase, platform = common.games['console_wrong_title']
         # search_term, rombase, platform = common.games['console_wrong_platform']
+        search_term, rombase, platform = games['age_of_wonders_3']
 
         subject = ROMObj({
             'id': '1234',
