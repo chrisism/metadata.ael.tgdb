@@ -229,9 +229,10 @@ class TheGamesDB(Scraper):
         gamedata['trailer']   = self._parse_metadata_trailer(online_data)
 
         # --- Put metadata in the cache ---
-        logger.debug('TheGamesDB.get_metadata() Adding to metadata cache "{}"'.format(self.cache_key))
+        logger.debug(f'TheGamesDB.get_metadata() Adding to metadata cache "{self.cache_key}"')
         self._update_disk_cache(Scraper.CACHE_METADATA, self.cache_key, gamedata)
 
+        logger.debug(f"TheGamesDB.get_metadata() Available metadata for the current scraped title: {json.dumps(gamedata)}")
         return gamedata
  
     # This function may be called many times in the ROM Scanner. All calls to this function
@@ -433,7 +434,7 @@ class TheGamesDB(Scraper):
         tags = []
         if 'coop' in online_data and online_data['coop'] == 'Yes':
             tags.append('co-op')
-        if 'hdd' in online_data and online_data['hdd'] != '':
+        if 'hdd' in online_data and online_data['hdd'] != '' and online_data['hdd'] is not None :
             hdd = online_data['hdd']
             tags.append(f'hdd:{hdd}')
         if 'video' in online_data and online_data['video'] != '':
