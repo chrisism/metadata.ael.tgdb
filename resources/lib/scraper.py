@@ -24,14 +24,15 @@ from __future__ import division
 import logging
 import json
 import re
+from typing import Optional
 
 from urllib.parse import quote_plus
 
-# --- AEL packages ---
-from ael import constants, platforms, settings
-from ael.utils import io, net, kodi
-from ael.scrapers import Scraper
-from ael.api import ROMObj
+# --- AKL packages ---
+from akl import constants, platforms, settings
+from akl.utils import io, net, kodi
+from akl.scrapers import Scraper
+from akl.api import ROMObj
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +54,7 @@ class TheGamesDB(Scraper):
         constants.META_NPLAYERS_ID,
         constants.META_ESRB_ID,
         constants.META_PLOT_ID,
+        constants.META_TAGS_ID
     ]
     supported_asset_list = [
         constants.ASSET_FANART_ID,
@@ -106,7 +108,7 @@ class TheGamesDB(Scraper):
         self.developers_cached = {}
         self.publishers_cached = {}
 
-        cache_dir = settings.getSetting('scraper_cache_dir')
+        cache_dir = settings.getSettingAsFilePath('scraper_cache_dir')
         
         self.GLOBAL_CACHE_LIST.append(self.GLOBAL_CACHE_TGDB_GENRES)
         self.GLOBAL_CACHE_LIST.append(self.GLOBAL_CACHE_TGDB_DEVELOPERS)
@@ -145,10 +147,10 @@ class TheGamesDB(Scraper):
 
         # Prepare data for scraping.
         # --- Get candidates ---
-        scraper_platform = convert_AEL_platform_to_TheGamesDB(platform)
+        scraper_platform = convert_AKL_platform_to_TheGamesDB(platform)
         logger.debug('TheGamesDB.get_candidates() search_term         "{}"'.format(search_term))
         logger.debug('TheGamesDB.get_candidates() rom identifier      "{}"'.format(rom.get_identifier()))
-        logger.debug('TheGamesDB.get_candidates() AEL platform        "{}"'.format(platform))
+        logger.debug('TheGamesDB.get_candidates() AKL platform        "{}"'.format(platform))
         logger.debug('TheGamesDB.get_candidates() TheGamesDB platform "{}"'.format(scraper_platform))
         candidate_list = self._search_candidates(search_term, platform, scraper_platform, status_dic)
         if not status_dic['status']: return None
@@ -195,13 +197,16 @@ class TheGamesDB(Scraper):
         # | last_updated    | "last_updated": "2018-07-11 21:05:01" | No   |
         # | rating          | "rating": "M - Mature"                | Yes  |
         # | platform        | "platform": 1                         | No   |
-        # | coop            | "coop": "No"                          | No   |
-        # | youtube         | "youtube": "dR3Hm8scbEw"              | No   |
+        # | coop            | "coop": "No"                          | Yes  |
+        # | youtube         | "youtube": "dR3Hm8scbEw"              | Yes  |
         # | alternates      | "alternates": null                    | No   |
         # |-----------------|---------------------------------------|------|
         logger.debug('TheGamesDB.get_metadata() Metadata cache miss "{}"'.format(self.cache_key))
-        url_tail = '?apikey={}&id={}&fields=players%2Cgenres%2Coverview%2Crating'.format(
-            self._get_API_key(), self.candidate['id'])
+        fields = ['players', 'genres', 'overview', 'rating', 'coop', 
+            'youtube', 'hdd', 'video', 'sound']
+        fields_concat = '%2C'.join(fields)
+        id = self.candidate['id']
+        url_tail = f'?apikey={self._get_API_key()}&id={id}&fields={fields_concat}'
         url = TheGamesDB.URL_ByGameID + url_tail
         json_data = self._retrieve_URL_as_JSON(url, status_dic)
         if not status_dic['status']: return None
@@ -220,11 +225,14 @@ class TheGamesDB(Scraper):
         gamedata['nplayers']  = self._parse_metadata_nplayers(online_data)
         gamedata['esrb']      = self._parse_metadata_esrb(online_data)
         gamedata['plot']      = self._parse_metadata_plot(online_data)
+        gamedata['tags']      = self._parse_metadata_tags(online_data)
+        gamedata['trailer']   = self._parse_metadata_trailer(online_data)
 
         # --- Put metadata in the cache ---
-        logger.debug('TheGamesDB.get_metadata() Adding to metadata cache "{}"'.format(self.cache_key))
+        logger.debug(f'TheGamesDB.get_metadata() Adding to metadata cache "{self.cache_key}"')
         self._update_disk_cache(Scraper.CACHE_METADATA, self.cache_key, gamedata)
 
+        logger.debug(f"TheGamesDB.get_metadata() Available metadata for the current scraped title: {json.dumps(gamedata)}")
         return gamedata
  
     # This function may be called many times in the ROM Scanner. All calls to this function
@@ -318,11 +326,11 @@ class TheGamesDB(Scraper):
         candidate_list = []
         for item in games_json:
             title = item['game_title']            
-            scraped_ael_platform = convert_TheGamesDB_platform_to_AEL_platform(item['platform'])
+            scraped_akl_platform = convert_TheGamesDB_platform_to_AKL_platform(item['platform'])
             
             candidate = self._new_candidate_dic()
             candidate['id'] = item['id']
-            candidate['display_name'] = '{} ({})'.format(title, scraped_ael_platform.long_name)
+            candidate['display_name'] = '{} ({})'.format(title, scraped_akl_platform.long_name)
             candidate['platform'] = platform
             # Candidate platform may be different from scraper_platform if scraper_platform = 0
             # Always trust TGDB API about the platform of the returned candidates.
@@ -332,7 +340,7 @@ class TheGamesDB(Scraper):
             if title.lower() == search_term.lower():                  candidate['order'] += 2
             if title.lower().find(search_term.lower()) != -1:         candidate['order'] += 1
             if scraper_platform > 0 \
-                and platform == scraped_ael_platform.long_name:       candidate['order'] += 1
+                and platform == scraped_akl_platform.long_name:       candidate['order'] += 1
             candidate_list.append(candidate)
 
         logger.debug('TheGamesDB:: Found {0} titles with last request'.format(len(candidate_list)))
@@ -422,7 +430,28 @@ class TheGamesDB(Scraper):
 
         return plot_str
 
-    # Get a dictionary of TGDB genres (integers) to AEL genres (strings).
+    def _parse_metadata_tags(self, online_data:dict) -> list:
+        tags = []
+        if 'coop' in online_data and online_data['coop'] == 'Yes':
+            tags.append('co-op')
+        if 'hdd' in online_data and online_data['hdd'] != '' and online_data['hdd'] is not None :
+            hdd = online_data['hdd']
+            tags.append(f'hdd:{hdd}')
+        if 'video' in online_data and online_data['video'] != '':
+            tags.append(online_data['video'])
+        if 'sound' in online_data and online_data['sound'] != '':
+            tags.append(online_data['sound'])
+        return tags
+
+    def _parse_metadata_trailer(self, online_data:dict) -> str:
+        if not 'youtube' in online_data:
+            return None
+        
+        trailer_id = online_data['youtube']
+        if trailer_id == '': return None
+        return f'plugin://plugin.video.youtube/play/?video_id={trailer_id}'
+
+    # Get a dictionary of TGDB genres (integers) to AKL genres (strings).
     # TGDB genres are cached in an object variable.
     def _retrieve_genres(self, status_dic):
         # --- Cache hit ---
@@ -471,15 +500,18 @@ class TheGamesDB(Scraper):
 
         return developers
 
-    # Publishers is not used in AEL at the moment.
+    # Publishers is not used in AKL at the moment.
     # THIS FUNCTION CODE MUST BE UPDATED.
     def _retrieve_publishers(self, publisher_ids):
         if publisher_ids is None: return ''
         if self.publishers is None:
             logger.debug('TheGamesDB. No cached publishers. Retrieving from online.')
             url = TheGamesDB.URL_Publishers + '?apikey={}'.format(self._get_API_key())
-            page_data_raw = net.get_URL(url, self._clean_URL_for_log(url))
-            publishers_json = json.loads(page_data_raw)
+            publishers_json, http_code = net.get_URL(url, self._clean_URL_for_log(url), content_type=net.ContentType.JSON)
+            if http_code != 200:
+                logger.warning("Failure retrieving publishers data.")
+                return ""
+
             self.publishers_cached = {}
             for publisher_id in publishers_json['data']['publishers']:
                 self.publishers_cached[int(publisher_id)] = publishers_json['data']['publishers'][publisher_id]['name']
@@ -568,12 +600,11 @@ class TheGamesDB(Scraper):
     # * When the API number of calls is exhausted TGDB ...
     # * When a game search is not succesfull TGDB returns valid JSON with an empty list.
     def _retrieve_URL_as_JSON(self, url, status_dic):
-        page_data_raw, http_code = net.get_URL(url, self._clean_URL_for_log(url))
+        json_data, http_code = net.get_URL(url, self._clean_URL_for_log(url), content_type=net.ContentType.JSON)
 
         # --- Check HTTP error codes ---
         if http_code != 200:
             try:
-                json_data = json.loads(page_data_raw)
                 error_msg = json_data['message']
             except:
                 error_msg = 'Unknown/unspecified error.'
@@ -581,17 +612,10 @@ class TheGamesDB(Scraper):
             self._handle_error(status_dic, 'HTTP code {} message "{}"'.format(http_code, error_msg))
             return None
 
-        # If page_data_raw is None at this point is because of an exception in net_get_URL()
+        # If json_data is None at this point is because of an exception in net_get_URL()
         # which is not urllib2.HTTPError.
-        if page_data_raw is None:
+        if json_data is None:
             self._handle_error(status_dic, 'TGDB: Network error in net_get_URL()')
-            return None
-
-        # Convert data to JSON.
-        try:
-            json_data = json.loads(page_data_raw)
-        except Exception as ex:
-            self._handle_exception(ex, status_dic, 'Error decoding JSON data from TGDB.')
             return None
 
         # Check for scraper overloading. Scraper is disabled if overloaded.
@@ -627,30 +651,30 @@ class TheGamesDB(Scraper):
             total_allowance)
 
 # ------------------------------------------------------------------------------------------------
-# TheGamesDB supported platforms mapped to AEL platforms.
+# TheGamesDB supported platforms mapped to AKL platforms.
 # ------------------------------------------------------------------------------------------------
 DEFAULT_PLAT_TGDB = 0
 # NOTE must take into account platform aliases.
 # '0' means any platform in TGDB and must be returned when there is no platform matching.
-def convert_AEL_platform_to_TheGamesDB(platform_long_name) -> int:
-    matching_platform = platforms.get_AEL_platform(platform_long_name)
-    if matching_platform.compact_name in AEL_compact_platform_TGDB_mapping:
-        return AEL_compact_platform_TGDB_mapping[matching_platform.compact_name]
+def convert_AKL_platform_to_TheGamesDB(platform_long_name) -> int:
+    matching_platform = platforms.get_AKL_platform(platform_long_name)
+    if matching_platform.compact_name in AKL_compact_platform_TGDB_mapping:
+        return AKL_compact_platform_TGDB_mapping[matching_platform.compact_name]
     
-    if matching_platform.aliasof is not None and matching_platform.aliasof in AEL_compact_platform_TGDB_mapping:
-        return AEL_compact_platform_TGDB_mapping[matching_platform.aliasof]
+    if matching_platform.aliasof is not None and matching_platform.aliasof in AKL_compact_platform_TGDB_mapping:
+        return AKL_compact_platform_TGDB_mapping[matching_platform.aliasof]
         
     # Platform not found.
     return DEFAULT_PLAT_TGDB
         
-def convert_TheGamesDB_platform_to_AEL_platform(tgdb_platform:int) -> platforms.Platform:
-    if tgdb_platform in TGDB_AEL_compact_platform_mapping:
-        platform_compact_name = TGDB_AEL_compact_platform_mapping[tgdb_platform]
-        return platforms.get_AEL_platform_by_compact(platform_compact_name)
+def convert_TheGamesDB_platform_to_AKL_platform(tgdb_platform:int) -> platforms.Platform:
+    if tgdb_platform in TGDB_AKL_compact_platform_mapping:
+        platform_compact_name = TGDB_AKL_compact_platform_mapping[tgdb_platform]
+        return platforms.get_AKL_platform_by_compact(platform_compact_name)
         
-    return platforms.get_AEL_platform_by_compact(platforms.PLATFORM_UNKNOWN_COMPACT)
+    return platforms.get_AKL_platform_by_compact(platforms.PLATFORM_UNKNOWN_COMPACT)
         
-AEL_compact_platform_TGDB_mapping = {
+AKL_compact_platform_TGDB_mapping = {
     '3do':25,
     'cpc':4914,
     'a2600':22,
@@ -731,6 +755,6 @@ AEL_compact_platform_TGDB_mapping = {
     'tigergame':4940,
     'supervision':4959
 }
-TGDB_AEL_compact_platform_mapping = {}
-for key, value in AEL_compact_platform_TGDB_mapping.items():
-    TGDB_AEL_compact_platform_mapping[value] = key
+TGDB_AKL_compact_platform_mapping = {}
+for key, value in AKL_compact_platform_TGDB_mapping.items():
+    TGDB_AKL_compact_platform_mapping[value] = key

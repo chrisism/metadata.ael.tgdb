@@ -1,3 +1,4 @@
+from enum import auto
 import unittest, os
 import unittest.mock
 from unittest.mock import MagicMock, patch
@@ -5,18 +6,18 @@ from unittest.mock import MagicMock, patch
 import json
 import logging
 
-from fakes import FakeProgressDialog, random_string
+from tests.fakes import FakeProgressDialog, random_string, FakeFile
 
 logging.basicConfig(format = '%(asctime)s %(module)s %(levelname)s: %(message)s',
                 datefmt = '%m/%d/%Y %I:%M:%S %p', level = logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 from resources.lib.scraper import TheGamesDB
-from ael.scrapers import ScrapeStrategy, ScraperSettings
+from akl.scrapers import ScrapeStrategy, ScraperSettings
 
-from ael.api import ROMObj
-from ael import constants
-from ael.utils import net, io
+from akl.api import ROMObj
+from akl import constants
+from akl.utils import net, io
 
 def read_file(path):
     f = io.FileName(path)
@@ -26,7 +27,7 @@ def read_file_as_json(path):
     file_data = read_file(path)
     return json.loads(file_data, encoding = 'utf-8')
 
-def mocked_gamesdb(url, url_clean=None):
+def mocked_gamesdb(url, url_clean=None, content_type=None):
 
     print(url)
     mocked_json_file = ''
@@ -54,11 +55,9 @@ def mocked_gamesdb(url, url_clean=None):
     if 'cdn.thegamesdb.net/' in url:
         return read_file(Test_gamesdb_scraper.TEST_ASSETS_DIR + "\\test.jpg")
 
-    if mocked_json_file == '':
-        return net.get_URL(url)
-
     print('reading mocked data from file: {}'.format(mocked_json_file))
-    return read_file(mocked_json_file), 200
+    file_data = read_file(mocked_json_file)
+    return json.loads(file_data), 200
 
 class Test_gamesdb_scraper(unittest.TestCase):
     
@@ -77,9 +76,11 @@ class Test_gamesdb_scraper(unittest.TestCase):
         print('TEST ASSETS DIR: {}'.format(cls.TEST_ASSETS_DIR))
         print('---------------------------------------------------------------------------')
     
+    @patch('akl.scrapers.kodi.getAddonDir', autospec=True, return_value=FakeFile("/test"))
+    @patch('akl.scrapers.settings.getSettingAsFilePath', autospec=True, return_value=FakeFile("/test"))
     @patch('resources.lib.scraper.net.get_URL', side_effect = mocked_gamesdb)
-    @patch('ael.api.client_get_rom')
-    def test_scraping_metadata_for_game(self, api_rom_mock: MagicMock, mock_json_downloader):        
+    @patch('akl.api.client_get_rom')
+    def test_scraping_metadata_for_game(self, api_rom_mock: MagicMock, mock_json_downloader, cache_path_mock, addondir_mock):        
         # arrange
         settings = ScraperSettings()
         settings.scrape_metadata_policy = constants.SCRAPE_POLICY_SCRAPE_ONLY
@@ -104,11 +105,14 @@ class Test_gamesdb_scraper(unittest.TestCase):
         print(actual.get_data_dic())
         
     # add actual gamesdb apikey above and comment out patch attributes to do live tests
+    @patch('akl.scrapers.kodi.getAddonDir', autospec=True, return_value=FakeFile("/test"))
+    @patch('akl.scrapers.settings.getSettingAsFilePath', autospec=True, return_value=FakeFile("/test"))
     @patch('resources.lib.scraper.net.get_URL', side_effect = mocked_gamesdb)
     @patch('resources.lib.scraper.net.download_img')
     @patch('resources.lib.scraper.io.FileName.scanFilesInPath', autospec=True)
-    @patch('ael.api.client_get_rom')
-    def test_scraping_assets_for_game(self, api_rom_mock: MagicMock, scanner_mock, mock_img_downloader, mock_json_downloader):        
+    @patch('akl.api.client_get_rom')
+    def test_scraping_assets_for_game(self, api_rom_mock: MagicMock, 
+        scanner_mock, mock_img_downloader, mock_json_downloader, cache_path_mock, addondir_mock):        
         # arrange
         settings = ScraperSettings()
         settings.scrape_metadata_policy = constants.SCRAPE_ACTION_NONE
