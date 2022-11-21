@@ -181,12 +181,12 @@ class TheGamesDB(Scraper):
     def get_metadata(self, status_dic):
         # --- If scraper is disabled return immediately and silently ---
         if self.scraper_disabled:
-            logger.debug('TheGamesDB.get_metadata() Scraper disabled. Returning empty data.')
+            logger.debug('Scraper disabled. Returning empty data.')
             return self._new_gamedata_dic()
 
         # --- Check if search term is in the cache ---
         if self._check_disk_cache(Scraper.CACHE_METADATA, self.cache_key):
-            logger.debug('TheGamesDB.get_metadata() Metadata cache hit "{}"'.format(self.cache_key))
+            logger.debug('Metadata cache hit "{}"'.format(self.cache_key))
             return self._retrieve_from_disk_cache(Scraper.CACHE_METADATA, self.cache_key)
 
         # --- Request is not cached. Get candidates and introduce in the cache ---
@@ -210,7 +210,7 @@ class TheGamesDB(Scraper):
         # | youtube         | "youtube": "dR3Hm8scbEw"              | Yes  |
         # | alternates      | "alternates": null                    | No   |
         # |-----------------|---------------------------------------|------|
-        logger.debug('TheGamesDB.get_metadata() Metadata cache miss "{}"'.format(self.cache_key))
+        logger.debug('Metadata cache miss "{}"'.format(self.cache_key))
         fields = ['players', 'genres', 'overview', 'rating', 'coop',
                   'youtube', 'hdd', 'video', 'sound']
         fields_concat = '%2C'.join(fields)
@@ -223,7 +223,7 @@ class TheGamesDB(Scraper):
         self._dump_json_debug('TGDB_get_metadata.json', json_data)
 
         # --- Parse game page data ---
-        logger.debug('TheGamesDB.get_metadata() Parsing game metadata...')
+        logger.debug('Parsing game metadata...')
         online_data = json_data['data']['games'][0]
         gamedata = self._new_gamedata_dic()
         gamedata['title'] = self._parse_metadata_title(online_data)
@@ -241,10 +241,10 @@ class TheGamesDB(Scraper):
         gamedata['trailer'] = self._parse_metadata_trailer(online_data)
 
         # --- Put metadata in the cache ---
-        logger.debug(f'TheGamesDB.get_metadata() Adding to metadata cache "{self.cache_key}"')
+        logger.debug(f'Adding to metadata cache "{self.cache_key}"')
         self._update_disk_cache(Scraper.CACHE_METADATA, self.cache_key, gamedata)
 
-        logger.debug(f"TheGamesDB.get_metadata() Available metadata for the current scraped title: {json.dumps(gamedata)}")
+        logger.debug(f"Available metadata for the current scraped title: {json.dumps(gamedata)}")
         return gamedata
  
     # This function may be called many times in the ROM Scanner. All calls to this function
@@ -252,11 +252,22 @@ class TheGamesDB(Scraper):
     def get_assets(self, asset_info_id: str, status_dic):
         # --- If scraper is disabled return immediately and silently ---
         if self.scraper_disabled:
-            logger.debug('TheGamesDB.get_assets() Scraper disabled. Returning empty data.')
+            logger.debug('Scraper disabled. Returning empty data.')
             return []
 
-        logger.debug('TheGamesDB.get_assets() Getting assets {} for candidate ID "{}"'.format(
+        logger.debug('Getting assets {} for candidate ID "{}"'.format(
             asset_info_id, self.candidate['id']))
+
+        if asset_info_id == constants.ASSET_TRAILER_ID:
+            gamedata = self.get_metadata(status_dic)
+            if gamedata and 'trailer' in gamedata:
+                logger.debug("Found trailer asset")
+                asset_data = self._new_assetdata_dic()
+                asset_data['asset_ID'] = asset_info_id
+                asset_data['display_name'] = "Youtube Trailer"
+                asset_data['url_thumb'] = "Youtube.png"
+                asset_data['url'] = gamedata['trailer']
+                return [asset_data]
 
         # --- Request is not cached. Get candidates and introduce in the cache ---
         # Get all assets for candidate. _scraper_get_assets_all() caches all assets for a
@@ -265,7 +276,7 @@ class TheGamesDB(Scraper):
         if not status_dic['status']:
             return None
         asset_list = [asset_dic for asset_dic in all_asset_list if asset_dic['asset_ID'] == asset_info_id]
-        logger.debug('TheGamesDB::get_assets() Total assets {} / Returned assets {}'.format(
+        logger.debug('Total assets {} / Returned assets {}'.format(
             len(all_asset_list), len(asset_list)))
 
         return asset_list
@@ -299,6 +310,11 @@ class TheGamesDB(Scraper):
         self._dump_json_debug('TGDB_get_genres.json', json_data)
 
         return json_data
+
+    def download_image(self, image_url, image_local_path: io.FileName):
+        if "plugin.video.youtube"in image_url:
+            return image_url
+        return super(Scraper, self).download_image(image_url, image_local_path)
 
     # Always use the developer public key which is limited per IP address. This function
     # may return the private key during scraper development for debugging purposes.
@@ -555,11 +571,11 @@ class TheGamesDB(Scraper):
     def _retrieve_all_assets(self, candidate, status_dic):
         # --- Cache hit ---
         if self._check_disk_cache(Scraper.CACHE_INTERNAL, self.cache_key):
-            logger.debug('TheGamesDB._retrieve_all_assets() Internal cache hit "{0}"'.format(self.cache_key))
+            logger.debug(f'Internal cache hit "{self.cache_key}"')
             return self._retrieve_from_disk_cache(Scraper.CACHE_INTERNAL, self.cache_key)
 
         # --- Cache miss. Retrieve data and update cache ---
-        logger.debug('TheGamesDB._retrieve_all_assets() Internal cache miss "{0}"'.format(self.cache_key))
+        logger.debug(f'Internal cache miss "{self.cache_key}"')
         url_tail = '?apikey={}&games_id={}'.format(self._get_API_key(), candidate['id'])
         url = TheGamesDB.URL_Images + url_tail
         asset_list = self._retrieve_assets_from_url(url, candidate['id'], status_dic)
@@ -569,7 +585,7 @@ class TheGamesDB(Scraper):
             len(asset_list), candidate['id']))
 
         # --- Put metadata in the cache ---
-        logger.debug('TheGamesDB._retrieve_all_assets() Adding to internal cache "{0}"'.format(self.cache_key))
+        logger.debug(f'Adding to internal cache "{self.cache_key}"')
         self._update_disk_cache(Scraper.CACHE_INTERNAL, self.cache_key, asset_list)
 
         return asset_list
