@@ -63,6 +63,7 @@ class TheGamesDB(Scraper):
         constants.ASSET_SNAP_ID,
         constants.ASSET_BOXFRONT_ID,
         constants.ASSET_BOXBACK_ID,
+        constants.ASSET_TRAILER_ID
     ]
     asset_name_mapping = {
         'screenshot': constants.ASSET_SNAP_ID,
