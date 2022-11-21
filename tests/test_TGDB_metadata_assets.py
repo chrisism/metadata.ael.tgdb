@@ -42,6 +42,13 @@ games = {
     'MAME_wrong_platform' : ('Tetris (set 1)', 'atetris.zip', 'mjhyewqr'),
 }
 
+scraper_tgdb_apikey = os.getenv('TGDB_KEY')
+
+def get_setting(key:str):
+    if key == 'scraper_cache_dir': return Test_tgdb_metadata_assets.TEST_OUTPUT_DIR
+    if key == 'scraper_mobygames_apikey': return scraper_tgdb_apikey   
+    return ''
+
 class Test_tgdb_metadata_assets(unittest.TestCase):
      
     ROOT_DIR = ''
@@ -65,7 +72,7 @@ class Test_tgdb_metadata_assets(unittest.TestCase):
         if not os.path.exists(cls.TEST_OUTPUT_DIR):
             os.makedirs(cls.TEST_OUTPUT_DIR)
     
-    @unittest.skip('Actual API calls. Enable only if needed. Costs credits')
+    #@unittest.skip('Actual API calls. Enable only if needed. Costs credits')
     @patch('akl.settings.getSettingAsFilePath', autospec=True)
     @patch('akl.settings.getSetting', autospec=True)
     def test_tgdb_metadata(self, settings_mock:MagicMock, settings_path_mock:MagicMock): 
