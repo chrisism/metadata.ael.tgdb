@@ -150,16 +150,16 @@ class TheGamesDB(Scraper):
         # If the scraper is disabled return None and do not mark error in status_dic.
         # Candidate will not be introduced in the disk cache and will be scraped again.
         if self.scraper_disabled:
-            logger.debug('TheGamesDB.get_candidates() Scraper disabled. Returning empty data.')
+            logger.debug('Scraper disabled. Returning empty data for candidates.')
             return None
 
         # Prepare data for scraping.
         # --- Get candidates ---
         scraper_platform = convert_AKL_platform_to_TheGamesDB(platform)
-        logger.debug('TheGamesDB.get_candidates() search_term         "{}"'.format(search_term))
-        logger.debug('TheGamesDB.get_candidates() rom identifier      "{}"'.format(rom.get_identifier()))
-        logger.debug('TheGamesDB.get_candidates() AKL platform        "{}"'.format(platform))
-        logger.debug('TheGamesDB.get_candidates() TheGamesDB platform "{}"'.format(scraper_platform))
+        logger.debug('search_term         "{}"'.format(search_term))
+        logger.debug('rom identifier      "{}"'.format(rom.get_identifier()))
+        logger.debug('AKL platform        "{}"'.format(platform))
+        logger.debug('TheGamesDB platform "{}"'.format(scraper_platform))
         candidate_list = self._search_candidates(search_term, platform, scraper_platform, status_dic)
         if not status_dic['status']:
             return None
@@ -288,6 +288,8 @@ class TheGamesDB(Scraper):
         return url, url_log
 
     def resolve_asset_URL_extension(self, selected_asset, image_url, status_dic):
+        if selected_asset['asset_ID'] == constants.ASSET_TRAILER_ID:
+            return "url"
         return io.get_URL_extension(image_url)
 
     # --- This class own methods -----------------------------------------------------------------
@@ -687,20 +689,19 @@ class TheGamesDB(Scraper):
         if not extra_allowance:
             extra_allowance = 0
             
-        logger.debug('TheGamesDB::_check_overloading() remaining_monthly_allowance = {}'.format(remaining_monthly_allowance))
-        logger.debug('TheGamesDB::_check_overloading() extra_allowance = {}'.format(extra_allowance))
+        logger.debug('Threshold check: remaining_monthly_allowance = {}'.format(remaining_monthly_allowance))
+        logger.debug('Threshold check: extra_allowance = {}'.format(extra_allowance))
         total_allowance = remaining_monthly_allowance + extra_allowance
         
         if total_allowance > 0:
             return
-        logger.error('TheGamesDB::_check_overloading() remaining total allowance <= 0')
+        logger.error('Threshold check: remaining total allowance <= 0')
         logger.error('Disabling TGDB scraper.')
         self.scraper_disabled = True
         status_dic['status'] = False
         status_dic['dialog'] = kodi.KODI_MESSAGE_DIALOG
-        status_dic['msg'] = 'TGDB monthly/total allowance is {}. Scraper disabled.'.format(
-            total_allowance)
-
+        status_dic['msg'] = f'TGDB monthly/total allowance is {total_allowance}. Scraper disabled.'
+        
 
 # ------------------------------------------------------------------------------------------------
 # TheGamesDB supported platforms mapped to AKL platforms.
