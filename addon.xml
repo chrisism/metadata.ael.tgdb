@@ -2,7 +2,7 @@
 <addon id="script.akl.tgdbscraper" name="TGDB scraper for AKL" version="0.0.3" provider-name="chrisism">
   <requires>
       <import addon="xbmc.python" version="3.0.0"/>
-      <import addon="script.module.akl" version="1.0.5"/>
+      <import addon="script.module.akl" version="1.0.9"/>
   </requires>
   <extension point="xbmc.python.script" library="default.py">
     <provides>game</provides>
@@ -11,7 +11,7 @@
     <summary lang="en_GB">Scraper module for AKL plugin.</summary>
     <description lang="en_GB">
     This module can be used as a scraper plugin for AKL. It can be used to scrape metadata and assets
-    from The Games DB (TGDB).
+from The Games DB (TGDB).
     </description>
     <platform>all</platform>
     <license>GNU General Public License version 2</license>

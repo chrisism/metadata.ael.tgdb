@@ -190,26 +190,6 @@ class TheGamesDB(Scraper):
             return self._retrieve_from_disk_cache(Scraper.CACHE_METADATA, self.cache_key)
 
         # --- Request is not cached. Get candidates and introduce in the cache ---
-        # | Mandatory field | JSON example                          | Used |
-        # |-----------------|---------------------------------------|------|
-        # | id              | "id": 1                               | N/A  |
-        # | game_title      | "game_title": "Halo: Combat Evolved"  | N/A  |
-        # | release_date    | "release_date": "2001-11-15"          | N/A  |
-        # | developers      | "developers": [ 1389 ]                | N/A  |
-        # |-----------------|---------------------------------------|------|
-        # | Optional field  | JSON example                          | Used |
-        # |-----------------|---------------------------------------|------|
-        # | players         | "players" : 1                         | Yes  |
-        # | publishers      | "publishers": [ 1 ]                   | No   |
-        # | genres          | "genres": [ 8 ]                       | Yes  |
-        # | overview        | "overview": "In Halo's ..."           | Yes  |
-        # | last_updated    | "last_updated": "2018-07-11 21:05:01" | No   |
-        # | rating          | "rating": "M - Mature"                | Yes  |
-        # | platform        | "platform": 1                         | No   |
-        # | coop            | "coop": "No"                          | Yes  |
-        # | youtube         | "youtube": "dR3Hm8scbEw"              | Yes  |
-        # | alternates      | "alternates": null                    | No   |
-        # |-----------------|---------------------------------------|------|
         logger.debug(f'Metadata cache miss "{self.cache_key}"')
         fields = ['players', 'genres', 'overview', 'rating', 'coop',
                   'youtube', 'hdd', 'video', 'sound']
@@ -460,12 +440,25 @@ class TheGamesDB(Scraper):
         return nplayers_str
 
     def _parse_metadata_esrb(self, online_data):
-        if 'rating' in online_data and online_data['rating'] is not None:
-            esrb_str = online_data['rating']
-        else:
-            esrb_str = constants.DEFAULT_META_ESRB
-
-        return esrb_str
+        if 'rating' not in online_data or not online_data['rating']:
+            return constants.DEFAULT_META_ESRB
+        
+        esrb_str = online_data['rating']
+        if esrb_str in constants.ESRB_LIST:
+            return esrb_str
+        if esrb_str.startswith('T'):
+            return constants.ESRB_TEEN
+        if esrb_str.startswith('EC'):
+            return constants.ESRB_EARLY
+        if esrb_str.startswith('E10'):
+            return constants.ESRB_EVERYONE_10
+        if esrb_str.startswith('M'):
+            return constants.ESRB_MATURE
+        if esrb_str.startswith('AO'):
+            return constants.ESRB_ADULTS_ONLY
+        if esrb_str.startswith('E'):
+            return constants.ESRB_EVERYONE
+        return constants.ESRB_PENDING
 
     def _parse_metadata_plot(self, online_data):
         if 'overview' in online_data and online_data['overview'] is not None:

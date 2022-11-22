@@ -72,6 +72,27 @@ class Test_tgdb_metadata_assets(unittest.TestCase):
         if not os.path.exists(cls.TEST_OUTPUT_DIR):
             os.makedirs(cls.TEST_OUTPUT_DIR)
     
+    # | Mandatory field | JSON example                          | Used |
+    # |-----------------|---------------------------------------|------|
+    # | id              | "id": 1                               | N/A  |
+    # | game_title      | "game_title": "Halo: Combat Evolved"  | N/A  |
+    # | release_date    | "release_date": "2001-11-15"          | N/A  |
+    # | developers      | "developers": [ 1389 ]                | N/A  |
+    # |-----------------|---------------------------------------|------|
+    # | Optional field  | JSON example                          | Used |
+    # |-----------------|---------------------------------------|------|
+    # | players         | "players" : 1                         | Yes  |
+    # | publishers      | "publishers": [ 1 ]                   | No   |
+    # | genres          | "genres": [ 8 ]                       | Yes  |
+    # | overview        | "overview": "In Halo's ..."           | Yes  |
+    # | last_updated    | "last_updated": "2018-07-11 21:05:01" | No   |
+    # | rating          | "rating": "M - Mature"                | Yes  |
+    # | platform        | "platform": 1                         | No   |
+    # | coop            | "coop": "No"                          | Yes  |
+    # | youtube         | "youtube": "dR3Hm8scbEw"              | Yes  |
+    # | alternates      | "alternates": null                    | No   |
+    # |-----------------|---------------------------------------|------|
+    
     #@unittest.skip('Actual API calls. Enable only if needed. Costs credits')
     @patch('akl.settings.getSettingAsFilePath', autospec=True)
     @patch('akl.settings.getSetting', autospec=True)
