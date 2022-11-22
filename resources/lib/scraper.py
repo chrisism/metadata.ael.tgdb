@@ -186,7 +186,7 @@ class TheGamesDB(Scraper):
 
         # --- Check if search term is in the cache ---
         if self._check_disk_cache(Scraper.CACHE_METADATA, self.cache_key):
-            logger.debug('Metadata cache hit "{}"'.format(self.cache_key))
+            logger.debug(f'Metadata cache hit "{self.cache_key}"')
             return self._retrieve_from_disk_cache(Scraper.CACHE_METADATA, self.cache_key)
 
         # --- Request is not cached. Get candidates and introduce in the cache ---
@@ -210,7 +210,7 @@ class TheGamesDB(Scraper):
         # | youtube         | "youtube": "dR3Hm8scbEw"              | Yes  |
         # | alternates      | "alternates": null                    | No   |
         # |-----------------|---------------------------------------|------|
-        logger.debug('Metadata cache miss "{}"'.format(self.cache_key))
+        logger.debug(f'Metadata cache miss "{self.cache_key}"')
         fields = ['players', 'genres', 'overview', 'rating', 'coop',
                   'youtube', 'hdd', 'video', 'sound']
         fields_concat = '%2C'.join(fields)
@@ -255,8 +255,8 @@ class TheGamesDB(Scraper):
             logger.debug('Scraper disabled. Returning empty data.')
             return []
 
-        logger.debug('Getting assets {} for candidate ID "{}"'.format(
-            asset_info_id, self.candidate['id']))
+        candidate_id = self.candidate['id']
+        logger.debug(f'Getting assets {asset_info_id} for candidate ID "{candidate_id}"')
 
         if asset_info_id == constants.ASSET_TRAILER_ID:
             gamedata = self.get_metadata(status_dic)
@@ -292,7 +292,7 @@ class TheGamesDB(Scraper):
 
     # --- This class own methods -----------------------------------------------------------------
     def debug_get_platforms(self, status_dic):
-        logger.debug('TheGamesDB.debug_get_platforms() BEGIN...')
+        logger.debug('Get Platforms: BEGIN...')
         url = TheGamesDB.URL_Platforms + '?apikey={}'.format(self._get_API_key())
         json_data = self._retrieve_URL_as_JSON(url, status_dic)
         if not status_dic['status']:
@@ -302,7 +302,7 @@ class TheGamesDB(Scraper):
         return json_data
 
     def debug_get_genres(self, status_dic):
-        logger.debug('TheGamesDB.debug_get_genres() BEGIN...')
+        logger.debug('Get Genres: BEGIN...')
         url = TheGamesDB.URL_Genres + '?apikey={}'.format(self._get_API_key())
         json_data = self._retrieve_URL_as_JSON(url, status_dic)
         if not status_dic['status']:
@@ -312,7 +312,7 @@ class TheGamesDB(Scraper):
         return json_data
 
     def download_image(self, image_url, image_local_path: io.FileName):
-        if "plugin.video.youtube"in image_url:
+        if "plugin.video.youtube" in image_url:
             return image_url
         return super(Scraper, self).download_image(image_url, image_local_path)
 
@@ -379,11 +379,11 @@ class TheGamesDB(Scraper):
                 candidate['order'] += 1
             candidate_list.append(candidate)
 
-        logger.debug('TheGamesDB:: Found {0} titles with last request'.format(len(candidate_list)))
+        logger.debug(f'TheGamesDB:: Found {len(candidate_list)} titles with last request')
         # --- Recursively load more games ---
         next_url = json_data['pages']['next']
         if next_url is not None:
-            logger.debug('TheGamesDB._retrieve_games_from_url() Recursively loading game page')
+            logger.debug('Recursively loading game page')
             candidate_list = candidate_list + self._retrieve_games_from_url(
                 next_url, search_term, platform, scraper_platform, status_dic)
             if not status_dic['status']:
@@ -500,11 +500,11 @@ class TheGamesDB(Scraper):
     def _retrieve_genres(self, status_dic):
         # --- Cache hit ---
         if self._check_global_cache(TheGamesDB.GLOBAL_CACHE_TGDB_GENRES):
-            logger.debug('TheGamesDB._retrieve_genres() Genres global cache hit.')
+            logger.debug('Genres global cache hit.')
             return self._retrieve_global_cache(TheGamesDB.GLOBAL_CACHE_TGDB_GENRES)
 
         # --- Cache miss. Retrieve data ---
-        logger.debug('TheGamesDB._retrieve_genres() Genres global cache miss. Retrieving genres...')
+        logger.debug('Genres global cache miss. Retrieving genres...')
         url = TheGamesDB.URL_Genres + '?apikey={}'.format(self._get_API_key())
         page_data = self._retrieve_URL_as_JSON(url, status_dic)
         if not status_dic['status']:
@@ -641,9 +641,6 @@ class TheGamesDB(Scraper):
         clean_url = re.sub('apikey=[^&]*&', 'apikey=***&', clean_url)
         # apikey is at the end of the string
         clean_url = re.sub('apikey=[^&]*$', 'apikey=***', clean_url)
-        # log_variable('url', url)
-        # log_variable('clean_url', clean_url)
-
         return clean_url
 
     # Retrieve URL and decode JSON object.
