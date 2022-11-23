@@ -296,7 +296,7 @@ class TheGamesDB(Scraper):
     def download_image(self, image_url, image_local_path: io.FileName):
         if "plugin.video.youtube" in image_url:
             return image_url
-        return super(Scraper, self).download_image(image_url, image_local_path)
+        return super(TheGamesDB, self).download_image(image_url, image_local_path)
 
     # Always use the developer public key which is limited per IP address. This function
     # may return the private key during scraper development for debugging purposes.
