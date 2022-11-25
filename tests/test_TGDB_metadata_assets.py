@@ -93,7 +93,7 @@ class Test_tgdb_metadata_assets(unittest.TestCase):
     # | alternates      | "alternates": null                    | No   |
     # |-----------------|---------------------------------------|------|
     
-    #@unittest.skip('Actual API calls. Enable only if needed. Costs credits')
+    @unittest.skip('Actual API calls. Enable only if needed. Costs credits')
     @patch('akl.settings.getSettingAsFilePath', autospec=True)
     @patch('akl.settings.getSetting', autospec=True)
     def test_tgdb_metadata(self, settings_mock:MagicMock, settings_path_mock:MagicMock): 
