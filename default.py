@@ -15,7 +15,7 @@ import json
 import xbmcaddon
 
 # AKL main imports
-from akl import constants
+from akl import constants, settings
 from akl.utils import kodilogging, io, kodi
 from akl.scrapers import ScraperSettings, ScrapeStrategy
 
@@ -46,7 +46,7 @@ def run_plugin():
     for i in range(len(sys.argv)): logger.info('sys.argv[{}] "{}"'.format(i, sys.argv[i]))
     
     parser = argparse.ArgumentParser(prog='script.akl.tgdbscraper')
-    parser.add_argument('--cmd', help="Command to execute", choices=['launch', 'scan', 'scrape', 'configure'])
+    parser.add_argument('--cmd', help="Command to execute", choices=['launch', 'scan', 'scrape', 'configure', 'update-settings'])
     parser.add_argument('--type',help="Plugin type", choices=['LAUNCHER', 'SCANNER', 'SCRAPER'], default=constants.AddonType.LAUNCHER.name)
     parser.add_argument('--server_host', type=str, help="Host")
     parser.add_argument('--server_port', type=int, help="Port")
@@ -62,7 +62,10 @@ def run_plugin():
         kodi.dialog_OK(text=parser.usage)
         return
         
-    if args.type == constants.AddonType.SCRAPER.name and args.cmd == 'scrape': run_scraper(args)
+    if args.type == constants.AddonType.SCRAPER.name and args.cmd == 'scrape':
+        run_scraper(args)
+    elif args.cmd == "update-settings":
+        update_plugin_settings()
     else:
         kodi.dialog_OK(text=parser.format_help())
         
@@ -96,6 +99,18 @@ def run_scraper(args):
         pdialog.startProgress('Saving ROMs in database ...')
         scraper_strategy.store_scraped_roms(args.akl_addon_id, args.romcollection_id, scraped_roms)
         pdialog.endProgress()
+
+
+# ---------------------------------------------------------------------------------------------
+# UPDATE PLUGIN
+# ---------------------------------------------------------------------------------------------
+def update_plugin_settings():
+    supported_assets = '|'.join(TheGamesDB.supported_asset_list)
+    supported_metadata = '|'.join(TheGamesDB.supported_metadata_list)
+    
+    settings.setSetting("akl.scraper.supported_assets", supported_assets)
+    settings.setSetting("akl.scraper.supported_metadata", supported_metadata)
+    kodi.notify("Updated AKL plugin settings for this addon")
 
 # ---------------------------------------------------------------------------------------------
 # RUN

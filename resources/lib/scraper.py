@@ -6,7 +6,7 @@
 # https://github.com/muldjord/skyscraper
 # https://github.com/muldjord/skyscraper/blob/master/docs/SCRAPINGMODULES.md
 
-# Copyright (c) 2016-2019 Wintermute0110 <wintermute0110@gmail.com>
+# Copyright (c) Chrisism <crizizz@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
