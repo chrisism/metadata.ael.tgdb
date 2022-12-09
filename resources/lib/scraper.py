@@ -631,6 +631,9 @@ class TheGamesDB(Scraper):
     # TGDB URLs are safe for printing, however the API key is too long.
     # Clean URLs for safe logging.
     def _clean_URL_for_log(self, url):
+        if not url:
+            return url
+
         clean_url = url
         # apikey is followed by more arguments
         clean_url = re.sub('apikey=[^&]*&', 'apikey=***&', clean_url)
