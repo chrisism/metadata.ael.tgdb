@@ -240,7 +240,7 @@ class TheGamesDB(Scraper):
 
         if asset_info_id == constants.ASSET_TRAILER_ID:
             gamedata = self.get_metadata(status_dic)
-            if gamedata and 'trailer' in gamedata:
+            if gamedata and 'trailer' in gamedata and gamedata['trailer']:
                 logger.debug("Found trailer asset")
                 asset_data = self._new_assetdata_dic()
                 asset_data['asset_ID'] = asset_info_id
@@ -486,7 +486,7 @@ class TheGamesDB(Scraper):
             return None
         
         trailer_id = online_data['youtube']
-        if trailer_id == '':
+        if not trailer_id:
             return None
         return f'plugin://plugin.video.youtube/play/?video_id={trailer_id}'
 
