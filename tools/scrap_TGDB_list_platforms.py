@@ -6,18 +6,19 @@
 
 # --- Python standard library ---
 from __future__ import unicode_literals
-import os, sys
+import os
+import sys
 
-import pprint
 import logging
 
-logging.basicConfig(format = '%(asctime)s %(module)s %(levelname)s: %(message)s',
-                datefmt = '%m/%d/%Y %I:%M:%S %p', level = logging.DEBUG)
-logger = logging.getLogger(__name__)
+from resources.lib.scraper import TheGamesDB
+from akl.utils import kodi, text
 
-from resources.lib.scraper import TheGamesDB, AKL_compact_platform_TGDB_mapping
-from akl.utils import kodi, text, io
-from akl import constants, platforms
+
+logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s',
+                    datefmt='%m/%d/%Y %I:%M:%S %p',
+                    level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # --- configuration ------------------------------------------------------------------------------
 txt_fname = 'data/TGDB_platforms.txt'
@@ -38,7 +39,7 @@ if not status_dic['status']:
     print('SCRAPER ERROR: "' + status_dic['msg'] + '"')
     sys.exit(0)
 platforms_dic = json_data['data']['platforms']
-pname_dic = {platforms_dic[platform]['name'] : platform for platform in platforms_dic}
+pname_dic = {platforms_dic[platform]['name']: platform for platform in platforms_dic}
 # pprint.pprint(platforms_dic)
 
 # --- Print list ---
@@ -49,7 +50,7 @@ table_str = [
     ['left', 'left', 'left'],
     ['ID', 'Name', 'Short name'],
 ]
-for pname in sorted(pname_dic, reverse = False):
+for pname in sorted(pname_dic, reverse=False):
     platform = platforms_dic[pname_dic[pname]]
     # print('{0} {1} {2}'.format(platform['id'], platform['name'], platform['alias']))
     try:
@@ -59,7 +60,7 @@ for pname in sorted(pname_dic, reverse = False):
             platform['alias']
         ])
     except UnicodeEncodeError as ex:
-        print('Exception UnicodeEncodeError')
+        print(f'Exception UnicodeEncodeError: {ex.reason}')
         print('ID {0}'.format(platform['id']))
         sys.exit(0)
 table_str_list = text.render_table_str(table_str)
