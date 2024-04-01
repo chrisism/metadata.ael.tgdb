@@ -73,6 +73,7 @@ class TheGamesDB(Scraper):
         'fanart': constants.ASSET_FANART_ID,
         'clearlogo': constants.ASSET_CLEARLOGO_ID,
         'banner': constants.ASSET_BANNER_ID,
+        'titlescreen': constants.ASSET_TITLE_ID
     }
     # This allows to change the API version easily.
     URL_ByGameName = 'https://api.thegamesdb.net/v1/Games/ByGameName'
