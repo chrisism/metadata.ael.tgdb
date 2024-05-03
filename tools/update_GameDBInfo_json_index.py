@@ -15,18 +15,20 @@
 
 # --- Python standard library ---
 from __future__ import unicode_literals
-import os, sys
-
-import pprint
+import sys
 import logging
 
-logging.basicConfig(format = '%(asctime)s %(module)s %(levelname)s: %(message)s',
-                datefmt = '%m/%d/%Y %I:%M:%S %p', level = logging.DEBUG)
+
+from resources.lib.scraper import AKL_compact_platform_TGDB_mapping
+from akl.utils import io
+from akl import platforms
+
+
+logging.basicConfig(format='%(asctime)s %(module)s %(levelname)s: %(message)s',
+                    datefmt='%m/%d/%Y %I:%M:%S %p',
+                    level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-from resources.lib.scraper import TheGamesDB, AKL_compact_platform_TGDB_mapping
-from akl.utils import kodi, text, io
-from akl import constants, platforms
 
 # --- Constants -----------------------------------------------------------------------------------
 CURRENT_DIR = io.FileName('./')
@@ -39,11 +41,11 @@ for platform in platforms.AKL_platforms:
     # print('Processing platform "{0}"'.format(platform))
 
     # >> Open XML file and count ROMs
-    xml_file = CURRENT_DIR.pjoin(AKL_compact_platform_TGDB_mapping[platform.compact_name] ).getPath()
-    games = [] # TODO: audit_load_OfflineScraper_XML(xml_file)
+    xml_file = CURRENT_DIR.pjoin(AKL_compact_platform_TGDB_mapping[platform.compact_name]).getPath()
+    games = []  # TODO: audit_load_OfflineScraper_XML(xml_file)
 
     # >> Count ROMs and add to dictionary
-    platform_info = {'numROMs' : 0 }
+    platform_info = {'numROMs': 0}
     platform_info['numROMs'] = len(games)
     gamedb_info_dic[platform] = platform_info
     # print('numROMs = {0}'.format(platform_info['numROMs']))

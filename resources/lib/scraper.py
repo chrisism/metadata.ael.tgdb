@@ -6,7 +6,7 @@
 # https://github.com/muldjord/skyscraper
 # https://github.com/muldjord/skyscraper/blob/master/docs/SCRAPINGMODULES.md
 
-# Copyright (c) 2016-2019 Wintermute0110 <wintermute0110@gmail.com>
+# Copyright (c) Chrisism <crizizz@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -73,6 +73,7 @@ class TheGamesDB(Scraper):
         'fanart': constants.ASSET_FANART_ID,
         'clearlogo': constants.ASSET_CLEARLOGO_ID,
         'banner': constants.ASSET_BANNER_ID,
+        'titlescreen': constants.ASSET_TITLE_ID
     }
     # This allows to change the API version easily.
     URL_ByGameName = 'https://api.thegamesdb.net/v1/Games/ByGameName'
@@ -240,7 +241,7 @@ class TheGamesDB(Scraper):
 
         if asset_info_id == constants.ASSET_TRAILER_ID:
             gamedata = self.get_metadata(status_dic)
-            if gamedata and 'trailer' in gamedata:
+            if gamedata and 'trailer' in gamedata and gamedata['trailer']:
                 logger.debug("Found trailer asset")
                 asset_data = self._new_assetdata_dic()
                 asset_data['asset_ID'] = asset_info_id
@@ -486,7 +487,7 @@ class TheGamesDB(Scraper):
             return None
         
         trailer_id = online_data['youtube']
-        if trailer_id == '':
+        if not trailer_id:
             return None
         return f'plugin://plugin.video.youtube/play/?video_id={trailer_id}'
 
@@ -631,6 +632,9 @@ class TheGamesDB(Scraper):
     # TGDB URLs are safe for printing, however the API key is too long.
     # Clean URLs for safe logging.
     def _clean_URL_for_log(self, url):
+        if not url:
+            return url
+
         clean_url = url
         # apikey is followed by more arguments
         clean_url = re.sub('apikey=[^&]*&', 'apikey=***&', clean_url)
