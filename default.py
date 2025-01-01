@@ -90,9 +90,9 @@ def run_scraper(args: addons.AklAddonArguments):
         scraped_roms = scraper_strategy.process_roms(args.get_entity_type(), args.get_entity_id())
         pdialog.endProgress()
         pdialog.startProgress('Saving ROMs in database ...')
-        scraper_strategy.store_scraped_roms(args.get_akl_addon_id(), 
-                                            args.get_entity_type(), 
-                                            args.get_entity_id(), 
+        scraper_strategy.store_scraped_roms(args.get_akl_addon_id(),
+                                            args.get_entity_type(),
+                                            args.get_entity_id(),
                                             scraped_roms)
         pdialog.endProgress()
 
